@@ -1,2 +1,9 @@
-# Course_project_BDML_in_industry_2025
-Course_project_BDML_in_industry
+# Personalized Educational Assistant
+
+3rd semester course project Machine Learning for Industrial Data 
+
+**Students:**
+* Siraeva Gulnara
+* Levon Abramian
+* Gaibaliev Emil
+* [Gleb Mikloshevich](https://github.com/GlebMikloshevich)
