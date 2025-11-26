@@ -1,4 +1,21 @@
+# Python-generated files
 __pycache__/
-*.py[cod]
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+
+# Environments
 .env
+.venv
+env/
+venv/
+
+# Logs and local data
 logs/
+chroma_data/
+mongodb_data/
+kafka_data/
+elasticsearch_data/
+.DS_Store
