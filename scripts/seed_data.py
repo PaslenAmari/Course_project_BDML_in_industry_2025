@@ -1,0 +1,47 @@
+# seed_data.py
+"""Seed database with initial data"""
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
+from src.database.chroma_db import ChromaVectorDB
+from src.database.mongodb_adapter import LanguageLearningDB
+from src import config
+
+def seed():
+    print("Seeding data...")
+    
+    # 1. Seed MongoDB (Student)
+    mongo = LanguageLearningDB(config.MONGODB_URL)
+    mongo.create_student({
+        "student_id": "student_001",
+        "name": "Test Student",
+        "current_level": 2,
+        "target_language": "English"
+    })
+    
+    # 2. Seed Chroma (Materials for RAG)
+    chroma = ChromaVectorDB(config.CHROMA_PERSIST_DIR)
+    
+    materials = [
+        {
+            "id": "lesson_greetings",
+            "content": "Formal greetings: 'Good morning', 'Good afternoon'. Informal: 'Hi', 'Hey'.",
+            "topic": "Greetings",
+            "metadata": {"level": 1}
+        },
+        {
+            "id": "lesson_business",
+            "content": "Business meetings start with an agenda. Use 'I propose', 'I agree'.",
+            "topic": "Business",
+            "metadata": {"level": 3}
+        }
+    ]
+    
+    for m in materials:
+        chroma.add_material(m["id"], m["content"], m["topic"], m["metadata"])
+        
+    print("Done! Database populated.")
+
+if __name__ == "__main__":
+    seed()
