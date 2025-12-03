@@ -1,251 +1,172 @@
-import uuid
+# src/agents/curriculum_planner_agent.py
+import logging
+from typing import Dict, List, Optional
+from datetime import datetime
 import json
-from typing import Literal, List, Dict, Any, Optional
-from pydantic import BaseModel
 
-from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
-from langchain_core.tools import tool
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnableConfig
+from src.agents.base_agent import BaseAgent
+from src.database.mongodb_adapter import LanguageLearningDB
 
-from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.sqlite import SqliteSaver
-from langgraph.prebuilt import ToolNode
-
-# =============================================================================
-# 1. Простые хранилища памяти (вместо отдельных модулей)
-# =============================================================================
-
-class SimpleBlackboard:
-    """Shared memory — «чёрная доска» для всех агентов"""
-    def __init__(self):
-        self.data: Dict[str, Dict] = {}
-
-    def read(self, student_id: str, key: str = None):
-        student_data = self.data.get(student_id, {})
-        return student_data if key is None else student_data.get(key)
-
-    def write(self, student_id: str, key: str, value: Any):
-        if student_id not in self.data:
-            self.data[student_id] = {}
-        self.data[student_id][key] = value
-
-    def update(self, student_id: str, updates: Dict):
-        if student_id not in self.data:
-            self.data[student_id] = {}
-        self.data[student_id].update(updates)
+logger = logging.getLogger(__name__)
 
 
-class SimpleStudentProfile:
-    """Долгосрочная память студента (SQLite + JSON)"""
-    def __init__(self, db_path: str = "students.db"):
-        import sqlite3
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
-        self.conn.execute("""
-            CREATE TABLE IF NOT EXISTS profiles (
-                student_id TEXT PRIMARY KEY,
-                data TEXT
-            )
-        """)
-        self.conn.commit()
+class CurriculumPlannerAgent(BaseAgent):
+    """
+    Curriculum Planner Agent
+    Делает ровно одну вещь: создаёт и поддерживает долгосрочный учебный план (расписание тем на недели).
+    Работает автономно, использует только LLM и MongoDB.
+    """
 
-    def get(self, student_id: str) -> Dict:
-        cur = self.conn.cursor()
-        cur.execute("SELECT data FROM profiles WHERE student_id = ?", (student_id,))
-        row = cur.fetchone()
-        return json.loads(row[0]) if row else {}
+    def __init__(self, database_url: str):
+        super().__init__()  # → self.llm уже доступен
+        self.db = LanguageLearningDB(database_url)
+        logger.info("CurriculumPlannerAgent успешно инициализирован")
 
-    def save(self, student_id: str, data: Dict):
-        self.conn.execute("""
-            INSERT INTO profiles (student_id, data) 
-            VALUES (?, ?)
-            ON CONFLICT(student_id) DO UPDATE SET data = excluded.data
-        """, (student_id, json.dumps(data)))
-        self.conn.commit()
-
-
-# =============================================================================
-# 2. Pydantic-схемы
-# =============================================================================
-
-class LessonPlan(BaseModel):
-    lesson_number: int
-    topic: str
-    objectives: List[str]
-    duration_minutes: int = 45
-
-class Curriculum(BaseModel):
-    total_weeks: int = 12
-    topics_per_week: List[str]
-
-
-# =============================================================================
-# 3. Инструменты Curriculum Planner'а
-# =============================================================================
-
-blackboard = SimpleBlackboard()
-profile_db = SimpleStudentProfile()
-
-@tool
-def create_initial_curriculum(
-    target_language: str,
-    current_level: str,
-    goals: str,
-    weeks: int = 12
-) -> str:
-    """Создаёт общий учебный план при первом контакте"""
-    curriculum = Curriculum(total_weeks=weeks, topics_per_week=[
-        "Знакомство и базовые фразы",
-        "Настоящее время", "Семья и описание",
-        "Прошедшее время", "Еда и ресторан", "Путешествия", "Работа",
-        "Будущее время", "Условное наклонение", "Субхунтив", "Культура", "Итоговый проект"
-    ])
-    
-    profile_db.save(student_id, {
-        "target_language": target_language,
-        "cefr_level": current_level,
-        "goals": goals,
-        "curriculum": curriculum.dict()
-    })
-    
-    blackboard.write(student_id, "current_lesson", 1)
-    return f"Создан учебный план на {weeks} недель по {target_language} (уровень {current_level})"
-
-
-@tool
-def create_lesson_plan(topic: str, level: str) -> str:
-    """Создаёт план текущего урока и кладёт его на blackboard"""
-    current = blackboard.read(student_id, "current_lesson") or 1
-    plan = LessonPlan(
-        lesson_number=current,
-        topic=topic,
-        objectives=[
-            f"Освоить тему «{topic}»",
-            "Практика в диалогах",
-            "Упражнения на закрепление",
-            "Короткий тест"
+    def _get_fallback_curriculum(self, language: str = "English") -> Dict:
+        """Запасной план на случай, если LLM не ответит"""
+        topics = [
+            ["Приветствия", "Представление"],
+            ["Числа", "Время", "Дни недели"],
+            ["Семья", "Описание людей"],
+            ["Еда", "Ресторан", "Покупки"],
+            ["Город", "Дорога", "Транспорт"],
+            ["Работа", "Профессии", "Распорядок дня"],
+            ["Путешествия", "Отель", "Аэропорт"],
+            ["Прошедшее время", "Регулярные глаголы"],
+            ["Будущее время", "Планы"],
+            ["Привычки", "Частотные наречия"],
+            ["Сравнения", "Прилагательные"],
+            ["Условные предложения"],
         ]
-    )
-    blackboard.write(student_id, "current_lesson_plan", plan.dict())
-    blackboard.write(student_id, "current_topic", topic)
-    return f"Урок {current}: {topic} — план готов и опубликован на доске!"
+        return {
+            "total_weeks": 24,
+            "language": language,
+            "level_from": "A1",
+            "level_to": "B2+",
+            "generated_at": datetime.utcnow().isoformat(),
+            "topics_by_week": [
+                {"week": i + 1, "topics": topics[i % len(topics)]}
+                for i in range(24)
+            ]
+        }
 
+    def _generate_curriculum_with_llm(self, profile: Dict) -> Dict:
+        """Генерация плана через LLM"""
+        lang = profile.get("target_language", "English")
+        level = profile.get("current_level", 1)
+        goals = profile.get("goals", "Общее развитие")
+        style = profile.get("learning_style", "смешанный")
 
-@tool
-def finish_lesson_and_plan_next(score: int, weak_topics: Optional[List[str]] = None):
-    """Вызывается после урока — переходит к следующему"""
-    current = blackboard.read(student_id, "current_lesson") or 1
-    blackboard.write(student_id, "current_lesson", current + 1)
-    blackboard.write(student_id, "last_score", score)
-    
-    profile = profile_db.get(student_id)
-    history = profile.get("lesson_history", [])
-    history.append({"lesson": current, "score": score, "weak_topics": weak_topics or []})
-    profile["lesson_history"] = history[-20:]  # храним последние 20
-    profile_db.save(student_id, profile)
-    
-    return f"Урок {current} завершён! Оценка: {score}/100. Готовимся к уроку {current + 1}"
+        cefr = ["A1", "A2", "B1", "B2", "C1", "C2"][min(level - 1, 5)]
 
+        prompt = f"""
+Ты — эксперт по составлению учебных планов по иностранным языкам.
 
-tools = [create_initial_curriculum, create_lesson_plan, finish_lesson_and_plan_next]
-tool_node = ToolNode(tools)
+Студент изучает: {lang}
+Текущий уровень: {cefr} (внутренний уровень {level}/6)
+Цели: {goals}
+Стиль обучения: {style}
 
-# =============================================================================
-# 4. Сам Curriculum Planner
-# =============================================================================
+Составь подробный план на 24 недели.
+Каждая неделя — 1–2 логически связанные темы.
 
-class AgentState(BaseModel):
-    messages: List[Any]
-    student_id: str
-
-# Глобальный student_id — меняется при каждом новом студенте
-student_id = str(uuid.uuid4())
-
-# Выбирай любую модель:
-llm = ChatOllama(model="llama3.2:3b", temperature=0.7)
-# llm = ChatOllama(model="gemma2:9b")
-# llm = ChatOllama(model="phi3:14b")
-
-model_with_tools = llm.bind_tools(tools)
-
-def planner_node(state: AgentState):
-    profile = profile_db.get(state.student_id)
-    lesson_no = blackboard.read(state.student_id, "current_lesson") or 1
-    
-    system = f"""Ты — Curriculum Planner в персонализированном репетиторе по иностранным языкам.
-Студент ID: {state.student_id}
-Язык: {profile.get('target_language', 'не указан')}
-Уровень: {profile.get('cefr_level', 'A1')}
-Текущий урок: {lesson_no}
-
-Твои задачи:
-- При первом контакте — спроси язык, уровень, цели и вызови create_initial_curriculum.
-- На каждом занятии — создай план урока через create_lesson_plan.
-- После завершения урока (когда скажут) — вызови finish_lesson_and_plan_next.
-- Всегда используй инструменты, когда нужно что-то зафиксировать.
-
-Отвечай на русском или на целевом языке — как удобнее студенту.
+Ответь ТОЛЬКО валидным JSON, без пояснений:
+{{
+  "total_weeks": 24,
+  "language": "{lang}",
+  "level_from": "{cefr}",
+  "level_to": "C1",
+  "topics_by_week": [
+    {{"week": 1, "topics": ["Приветствия", "Представление"]}},
+    {{"week": 2, "topics": ["Числа до 100", "Время"]}},
+    ...
+  ]
+}}
 """
 
-    messages = [SystemMessage(content=system)] + state.messages
-    response = model_with_tools.invoke(messages)
-    return {"messages": [response]}
+        try:
+            response = self.invoke_llm(prompt)
+            # Убираем ```json и т.п.
+            json_str = response.strip()
+            if json_str.startswith("```"):
+                json_str = json_str.split("```", 2)[1]
+                if json_str.lower().startswith("json"):
+                    json_str = json_str[4:]
+            return json.loads(json_str)
+        except Exception as e:
+            logger.warning(f"LLM не смог сгенерировать план: {e}. Используется fallback.")
+            return self._get_fallback_curriculum(lang)
 
-def should_continue(state: AgentState) -> Literal["tools", "__end__"]:
-    last_msg = state.messages[-1]
-    if hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
-        return "tools"
-    return "__end__"
+    def _find_next_week(self, curriculum: Dict) -> Dict:
+        """Определяет, какая неделя следующая"""
+        completed = curriculum.get("completed_weeks", 0)
+        next_week_num = completed + 1
 
-# =============================================================================
-# 5. Сборка графа
-# =============================================================================
+        for week in curriculum.get("topics_by_week", []):
+            if week["week"] == next_week_num:
+                return {
+                    "week": next_week_num,
+                    "topics": week["topics"],
+                    "is_last": next_week_num >= curriculum.get("total_weeks", 24)
+                }
 
-workflow = StateGraph(AgentState)
+        # Если план закончился
+        return {
+            "week": next_week_num,
+            "topics": ["Итоговый проект", "Свободное общение"],
+            "is_last": True
+        }
 
-workflow.add_node("planner", planner_node)
-workflow.add_node("tools", tool_node)
+    # =================================================================
+    # Основной публичный метод
+    # =================================================================
+    def plan_curriculum(
+        self,
+        student_id: str,
+        force_regenerate: bool = False
+    ) -> Dict:
+        """
+        Создаёт или обновляет учебный план и возвращает следующую тему.
+        """
+        # 1. Загружаем профиль
+        profile = self.db.get_student(student_id)
+        if not profile:
+            return {"error": "Студент не найден", "student_id": student_id}
 
-workflow.add_edge(START, "planner")
-workflow.add_conditional_edges("planner", should_continue)
-workflow.add_edge("tools", "planner")
+        # 2. Проверяем, есть ли уже план
+        existing = self.db.get_curriculum(student_id)
 
-memory = SqliteSaver.from_conn_string("curriculum_checkpoints.db")
-app = workflow.compile(checkpointer=memory)
+        if existing and not force_regenerate:
+            curriculum = existing
+            logger.info(f"Используется существующий план для {student_id}")
+        else:
+            logger.info(f"Генерируется новый учебный план для {student_id}")
+            curriculum = self._generate_curriculum_with_llm(profile)
+            curriculum["student_id"] = student_id
+            curriculum["completed_weeks"] = 0
+            curriculum["created_at"] = datetime.utcnow().isoformat()
 
-# =============================================================================
-# 6. Запуск чата (просто запусти файл)
-# =============================================================================
+        # 3. Определяем следующую неделю
+        next_lesson = self._find_next_week(curriculum)
 
-if __name__ == "__main__":
-    print("Curriculum Planner запущен!")
-    print("Напиши «новый студент» — чтобы начать с чистого листа")
-    print("Напиши «выход» для завершения\n")
+        # 4. Сохраняем (если обновляли)
+        if not existing or force_regenerate:
+            self.db.save_curriculum(student_id, curriculum)
 
-    config = {"configurable": {"thread_id": "curriculum_thread", "student_id": student_id}}
+        # 5. Возвращаем результат
+        return {
+            "student_id": student_id,
+            "next_week": next_lesson["week"],
+            "next_topics": next_lesson["topics"],
+            "total_weeks": curriculum.get("total_weeks", 24),
+            "completed_weeks": curriculum.get("completed_weeks", 0),
+            "level_from": curriculum.get("level_from", "A1"),
+            "level_to": curriculum.get("level_to", "C1"),
+            "message": f"Неделя {next_lesson['week']}: {', '.join(next_lesson['topics'])}",
+            "plan_is_new": not bool(existing) or force_regenerate
+        }
 
-    while True:
-        user_input = input("\nТы: ").strip()
-        if user_input.lower() in ["выход", "exit", "quit"]:
-            break
-        if user_input.lower() == "новый студент":
-            student_id = str(uuid.uuid4())
-            config["configurable"]["student_id"] = student_id
-            blackboard.data.pop(student_id, None)
-            print("Новый студент создан! ID:", student_id)
-            continue
-
-        # Обновляем текущий student_id в конфиге
-        config["configurable"]["student_id"] = student_id
-
-        for chunk in app.stream(
-            {"messages": [HumanMessage(content=user_input)], "student_id": student_id},
-            config,
-            stream_mode="values"
-        ):
-            msg = chunk["messages"][-1]
-            if isinstance(msg, AIMessage) and msg.content:
-                print(f"Planner: {msg.content}")
-            elif isinstance(msg, ToolMessage):
-                print(f"Инструмент: {msg.content}")
+    # Удобный алиас
+    def get_next_topics(self, student_id: str) -> Dict:
+        """Быстро получить только следующую тему (без пересоздания плана)"""
+        return self.plan_curriculum(student_id, force_regenerate=False)
