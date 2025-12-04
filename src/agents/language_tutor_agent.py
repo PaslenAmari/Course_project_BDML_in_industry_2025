@@ -1,3 +1,4 @@
+# language_tutor_agent.py
 """
 Language Tutor Agent.
 
@@ -39,8 +40,10 @@ class LanguageTutorAgent(BaseAgent):
 
     def __init__(
         self,
-        database_url: str,
-        vector_path: str,
+        # database_url: str,
+        # vector_path: str,
+        database_url: str = "mongodb://localhost:27017",
+        vector_path: str = "./chroma_data"
     ):
         """
         Initialize Tutor Agent.

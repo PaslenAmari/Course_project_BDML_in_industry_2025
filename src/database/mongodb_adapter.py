@@ -50,4 +50,28 @@ class LanguageLearningDB:
             logger.error(f"Error saving assessment: {e}")
             return ""
             
-    # ... (остальные методы можно добавить позже, для теста Assessor они не критичны)
+    def get_curriculum(self, student_id: str) -> Optional[Dict]:
+        """Получить текущий учебный план студента."""
+        try:
+            doc = self.db.learning_plans.find_one({"student_id": student_id})
+            return doc
+        except Exception as e:
+            logger.error(f"Error getting curriculum for {student_id}: {e}")
+            return None
+
+    def save_curriculum(self, student_id: str, curriculum: Dict) -> bool:
+        """
+        Сохранить или обновить учебный план для студента.
+        """
+        try:
+            curriculum["student_id"] = student_id
+            curriculum["updated_at"] = datetime.utcnow()
+            self.db.learning_plans.update_one(
+                {"student_id": student_id},
+                {"$set": curriculum},
+                upsert=True,
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error saving curriculum for {student_id}: {e}")
+            return False

@@ -1,18 +1,27 @@
+# llm.py
 import os
 from langchain_openai import ChatOpenAI
+import logging
+from dotenv import load_dotenv
+load_dotenv()
 
+logger = logging.getLogger(__name__)
 
-def get_llm():
-    """
-    Create LLM client using environment variables.
-    
-    - LITELLM_BASE_URL: e.g. http://a6k2.dgx:34000/v1
-    - LITELLM_API_KEY: dummy or real key (если сервер его игнорирует — можно пустой)
-    - MODEL_NAME: e.g. qwen2.5-32b
-    """
+# грузим .env не из текущей папки, а из src
+SRC_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+ENV_PATH = os.path.join(SRC_DIR, ".env")
+load_dotenv(ENV_PATH) 
+
+def get_llm(mock: bool | None = None):
+    api_key = os.getenv("LITELLM_API_KEY", "")
     base_url = os.getenv("LITELLM_BASE_URL", "http://a6k2.dgx:34000/v1")
-    api_key = os.getenv("LITELLM_API_KEY", "dummy-key")
     model = os.getenv("MODEL_NAME", "qwen2.5-32b")
+
+    if mock is True or len(api_key) < 5:
+        logger.warning("LLM running in MOCK mode (no real API calls).")
+        return None
+
+    logger.info(f"Loaded API key: '{api_key[:10]}...' (length: {len(api_key)})")
 
     return ChatOpenAI(
         base_url=base_url,
@@ -20,3 +29,4 @@ def get_llm():
         model=model,
         temperature=0.7,
     )
+print(f"LITELLM_API_KEY length: {len(os.getenv('LITELLM_API_KEY', ''))}")
