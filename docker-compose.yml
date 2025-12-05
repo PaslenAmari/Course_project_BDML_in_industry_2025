@@ -3,7 +3,7 @@
 services:
   mongo:
     image: mongo:6
-    container_name: mongo-ll
+    container_name: kursach
     ports:
       - "27017:27017"
     restart: unless-stopped
