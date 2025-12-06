@@ -34,18 +34,18 @@ class CurriculumPlannerAgent(BaseAgent):
     def _get_fallback_curriculum(self, language: str = "English") -> Dict:
         """Запасной план на случай, если LLM не ответит"""
         topics = [
-            ["Приветствия", "Представление"],
-            ["Числа", "Время", "Дни недели"],
-            ["Семья", "Описание людей"],
-            ["Еда", "Ресторан", "Покупки"],
-            ["Город", "Дорога", "Транспорт"],
-            ["Работа", "Профессии", "Распорядок дня"],
-            ["Путешествия", "Отель", "Аэропорт"],
-            ["Прошедшее время", "Регулярные глаголы"],
-            ["Будущее время", "Планы"],
-            ["Привычки", "Частотные наречия"],
-            ["Сравнения", "Прилагательные"],
-            ["Условные предложения"],
+            ["Greetings", "Introduction"],
+            ["Numbers", "Time", "Days of the week"],
+            ["Family", "Description of People"],
+            ["Food", "Restaurant", "Shopping"],
+            ["City", "Road", "Transport"],
+            ["Work", "Professions", "Daily Routine"],
+            ["Travel", "Hotel", "Airport"],
+            ["Past Tense", "Regular Verbs"],
+            ["Future Tense", "Plans"],
+            ["Habits", "Frequency Adverbs"],
+            ["Comparisons", "Adjectives"],
+            ["Conditional Sentences"],
         ]
         return {
             "total_weeks": 24,
