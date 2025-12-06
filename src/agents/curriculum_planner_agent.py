@@ -4,6 +4,15 @@ from typing import Dict, List, Optional
 from datetime import datetime
 import json
 
+import sys
+import json
+from pathlib import Path
+
+# Add project root to path
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from src.agents.base_agent import BaseAgent
 from src.database.mongodb_adapter import LanguageLearningDB
 
@@ -51,51 +60,52 @@ class CurriculumPlannerAgent(BaseAgent):
         }
 
     def _generate_curriculum_with_llm(self, profile: Dict) -> Dict:
-        """Генерация плана через LLM"""
+        """Генерация идеального плана для английского языка под Qwen3-32B"""
         lang = profile.get("target_language", "English")
         level = profile.get("current_level", 1)
-        goals = profile.get("goals", "Общее развитие")
-        style = profile.get("learning_style", "смешанный")
-
+        goals = profile.get("goals", "General English fluency")
         cefr = ["A1", "A2", "B1", "B2", "C1", "C2"][min(level - 1, 5)]
 
-        prompt = f"""
-Ты — эксперт по составлению учебных планов по иностранным языкам.
+        prompt = f"""You are the world's best English language curriculum designer.
 
-Студент изучает: {lang}
-Текущий уровень: {cefr} (внутренний уровень {level}/6)
-Цели: {goals}
-Стиль обучения: {style}
+Student level: {cefr}
+Goal: {goals}
 
-Составь подробный план на 24 недели.
-Каждая неделя — 1–2 логически связанные темы.
+Create a 24-week English course plan. 1–2 topics per week.
 
-Ответь ТОЛЬКО валидным JSON, без пояснений:
+ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO explanations:
+
 {{
   "total_weeks": 24,
-  "language": "{lang}",
+  "language": "English",
   "level_from": "{cefr}",
   "level_to": "C1",
   "topics_by_week": [
-    {{"week": 1, "topics": ["Приветствия", "Представление"]}},
-    {{"week": 2, "topics": ["Числа до 100", "Время"]}},
-    ...
+    {{"week": 1, "topics": ["Greetings & Introductions", "Alphabet & Pronunciation"]}},
+    {{"week": 2, "topics": ["Numbers 1-100", "Telling Time", "Days & Months"]}},
+    {{"week": 3, "topics": ["Family Members", "Possessive Adjectives"]}},
+    {{"week": 4, "topics": ["Daily Routine", "Present Simple"]}},
+    // ... and so on until week 24. The above is just an example; you don't have to use these exact topics; use your level and goal as a guide.
   ]
-}}
-"""
+}}"""
 
         try:
-            response = self.invoke_llm(prompt)
-            # Убираем ```json и т.п.
-            json_str = response.strip()
-            if json_str.startswith("```"):
-                json_str = json_str.split("```", 2)[1]
-                if json_str.lower().startswith("json"):
-                    json_str = json_str[4:]
-            return json.loads(json_str)
+            response = self.llm.invoke(prompt)
+            text = response.content.strip()
+
+            # Очень жёсткий парсинг — работает даже если модель "заболталась"
+            start = text.find("{")
+            end = text.rfind("}") + 1
+            if start == -1 or end == 0:
+                raise ValueError("No JSON found")
+            json_str = text[start:end]
+            plan = json.loads(json_str)
+            logger.info("LLM успешно сгенерировал идеальный план на английском!")
+            return plan
+
         except Exception as e:
-            logger.warning(f"LLM не смог сгенерировать план: {e}. Используется fallback.")
-            return self._get_fallback_curriculum(lang)
+            logger.warning(f"LLM не дал валидный JSON: {e}. Используем fallback.")
+            return self._get_fallback_curriculum("English")
 
     def _find_next_week(self, curriculum: Dict) -> Dict:
         """Определяет, какая неделя следующая"""
