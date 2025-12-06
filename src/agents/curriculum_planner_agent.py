@@ -66,13 +66,13 @@ class CurriculumPlannerAgent(BaseAgent):
         goals = profile.get("goals", "General English fluency")
         cefr = ["A1", "A2", "B1", "B2", "C1", "C2"][min(level - 1, 5)]
 
-        prompt = f"""You are the world's best English language curriculum designer.
+        prompt = f"""You are the world's best language curriculum designer.
 
 Student level: {cefr}
 Goal: {goals}
 Language: {lang}
 
-Create a 24-week English course plan. 1-2 topics per week.
+Create a 24-week course plan. 1-2 topics per week.
 
 ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO explanations:
 
