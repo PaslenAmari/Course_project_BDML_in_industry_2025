@@ -22,6 +22,7 @@ from src.database.mongodb_adapter import LanguageLearningDB
 from src.database.chroma_db import ChromaVectorDB
 
 logger = logging.getLogger(__name__)
+# logger = tutor_logger 
 
 
 class LanguageTutorAgent(BaseAgent):
