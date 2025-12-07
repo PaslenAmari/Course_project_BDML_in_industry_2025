@@ -358,6 +358,42 @@ class LanguageTutorAgent(BaseAgent):
 
         return state
 
+
+    def chat(self, message: str) -> str:
+        """
+        Chat interface for Streamlit.
+        Wraps teach() method to provide a conversational experience.
+        
+        Args:
+            message: User input (lesson topic or question)
+        
+        Returns:
+            Formatted response with lesson information
+        """
+        try:
+            result = self.teach(
+                student_id="default_student",
+                topic=message
+            )
+            
+            # Format response as readable text
+            output = f"""
+    **Lesson: {result.get('topic', 'N/A')}**
+
+     **Outline:**
+    {chr(10).join(['• ' + item for item in result.get('outline', [])])}
+
+     **Selected Tools:** {', '.join(result.get('selected_tools', []))}
+
+    ⏱ **Duration:** {result.get('lesson_metadata', {}).get('duration_minutes', 'N/A')} minutes
+
+     **Phase:** {result.get('lesson_metadata', {}).get('phase', 'N/A')}
+    """
+            return output.strip()
+        except Exception as e:
+            return f" Tutor error: {str(e)}"
+
+
     def teach(
         self,
         student_id: str,
