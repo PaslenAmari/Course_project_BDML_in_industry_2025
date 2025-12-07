@@ -14,7 +14,7 @@ def run_test():
     agent = LanguageTutorAgent()
 
     result = agent.teach(
-        student_id="student_001",
+        student_id="emil_english",
         topic="Present Simple Tense",
         outline=None,  # можно передать свой список шагов, если нужно
     )

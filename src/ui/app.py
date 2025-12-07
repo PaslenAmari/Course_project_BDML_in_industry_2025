@@ -1,49 +1,83 @@
 import streamlit as st
-from src.agents.language_tutor_agent import CurriculumPlannerAgent
+from src.agents.curriculum_planner_agent import CurriculumPlannerAgent
 from src.agents.language_tutor_agent import LanguageTutorAgent
+
 
 st.set_page_config(page_title="Language course", layout="wide")
 
-# ---------- Planner UI ----------
-st.title("Language course – demo UI")
 
+# ============================================================================
+# CURRICULUM PLANNER SECTION
+# ============================================================================
+# Allows students to generate a personalized 24-week learning curriculum
+# based on their proficiency level, goals, and target language.
+
+st.title("Language Learning Platform")
+
+
+# Student input fields for curriculum generation
 name = st.text_input("Student name")
-level = st.selectbox("Current level", ["A1", "A2", "B1", "B2", "C1"])
-weeks = st.slider("Number of weeks", 4, 24, 12)
+level = st.selectbox("Current proficiency level", ["A1", "A2", "B1", "B2", "C1"])
+weeks = st.slider("Curriculum duration (weeks)", 4, 24, 12)
 
-if st.button("Generate plan"):
-    # TODO: здесь вместо f-string вызвать твой CurriculumPlannerAgent
-    st.write(f"Plan for {name} for {weeks} weeks (level {level})")
 
-st.write("---")  # разделитель
+# Generate curriculum using the planner agent
+if st.button("Generate Learning Plan"):
+    try:
+        planner = CurriculumPlannerAgent(database_url="mongodb://localhost:27017")
+        result = planner.plan_curriculum(
+            student_id=name.lower().replace(" ", "_") if name else "default_student",
+            force_regenerate=True
+        )
+        st.success("✅ Curriculum generated successfully!")
+        st.json(result)
+    except Exception as e:
+        st.error(f"Curriculum generation failed: {e}")
 
-# ---------- Tutor chat UI ----------
-st.header("Language Tutor")
 
-# создаём агента один раз
+st.divider()
+
+
+# ============================================================================
+# LANGUAGE TUTOR CHATBOT SECTION
+# ============================================================================
+# Interactive chat interface powered by the Language Tutor Agent.
+# Provides personalized lessons, exercises, and dialogues based on student needs.
+
+st.header("Interactive Language Tutor")
+
+
+# Initialize tutor agent once per session
 if "tutor" not in st.session_state:
-    st.session_state.tutor = LanguageTutorAgent()  # подставь нужные параметры
+    try:
+        st.session_state.tutor = LanguageTutorAgent()
+    except Exception as e:
+        st.error(f"Failed to initialize tutor agent: {e}")
 
-# храним историю диалога
+
+# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# выводим историю
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):  # "user" или "assistant"
-        st.markdown(msg["content"])
 
-# поле ввода снизу
-if prompt := st.chat_input("Type your message to the tutor"):
-    # сообщение студента
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# Display conversation history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+
+# Chat input and response handling
+if user_input := st.chat_input("Ask your tutor a question or request a lesson topic"):
+    # Add user message to history
+    st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(user_input)
 
-    # ответ LLM‑тьютора
-    reply = st.session_state.tutor.chat(prompt)  # или другой метод
-
-    with st.chat_message("assistant"):
-        st.markdown(reply)
-
-    st.session_state.messages.append({"role": "assistant", "content": reply})
+    # Generate tutor response
+    try:
+        tutor_response = st.session_state.tutor.chat(user_input)
+        st.session_state.messages.append({"role": "assistant", "content": tutor_response})
+        with st.chat_message("assistant"):
+            st.markdown(tutor_response)
+    except Exception as e:
+        st.error(f"Tutor encountered an error: {e}")

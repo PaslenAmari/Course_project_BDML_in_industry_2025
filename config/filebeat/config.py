@@ -10,4 +10,4 @@ CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
 
 LITELLM_BASE_URL = os.getenv("LITELLM_BASE_URL", "http://localhost:34000/v1")
 LITELLM_API_KEY = os.getenv("LITELLM_API_KEY", "dummy-key")
-MODEL_NAME = os.getenv("MODEL_NAME", "qwen2.5-7b")
+MODEL_NAME = os.getenv("MODEL_NAME", "qwen3-32b")
