@@ -22,17 +22,17 @@ logger = logging.getLogger(__name__)
 class CurriculumPlannerAgent(BaseAgent):
     """
     Curriculum Planner Agent
-    Делает ровно одну вещь: создаёт и поддерживает долгосрочный учебный план (расписание тем на недели).
-    Работает автономно, использует только LLM и MongoDB.
+    Create and maintain a long-term curriculum (a weekly schedule of topics).
+    It operates autonomously, using only LLM and MongoDB.
     """
 
     def __init__(self, database_url: str):
-        super().__init__()  # → self.llm уже доступен
+        super().__init__()
         self.db = LanguageLearningDB(database_url)
-        logger.info("CurriculumPlannerAgent успешно инициализирован")
+        logger.info("CurriculumPlannerAgent successfully initialized")
 
     def _get_fallback_curriculum(self, language: str = "English") -> Dict:
-        """Запасной план на случай, если LLM не ответит"""
+        """Backup plan in case LLM doesn't respond"""
         topics = [
             ["Greetings", "Introduction"],
             ["Numbers", "Time", "Days of the week"],
@@ -60,7 +60,7 @@ class CurriculumPlannerAgent(BaseAgent):
         }
 
     def _generate_curriculum_with_llm(self, profile: Dict) -> Dict:
-        """Генерация идеального плана для английского языка под Qwen3-32B"""
+        """Generating the perfect plan for Qwen3-32B"""
         lang = profile.get("target_language", "English")
         level = profile.get("current_level", 1)
         goals = profile.get("goals", "General English fluency")
@@ -94,22 +94,22 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             response = self.llm.invoke(prompt)
             text = response.content.strip()
 
-            # Очень жёсткий парсинг — работает даже если модель "заболталась"
+            # Very rigorous parsing – works even if the model is "chattering"
             start = text.find("{")
             end = text.rfind("}") + 1
             if start == -1 or end == 0:
                 raise ValueError("No JSON found")
             json_str = text[start:end]
             plan = json.loads(json_str)
-            logger.info("LLM успешно сгенерировал идеальный план на английском!")
+            logger.info("LLM successfully generated the perfect plan!")
             return plan
 
         except Exception as e:
-            logger.warning(f"LLM не дал валидный JSON: {e}. Используем fallback.")
+            logger.warning(f"LLM did not return valid JSON: {e}. Using fallback.")
             return self._get_fallback_curriculum("English")
 
     def _find_next_week(self, curriculum: Dict) -> Dict:
-        """Определяет, какая неделя следующая"""
+        """Determines which week is next"""
         completed = curriculum.get("completed_weeks", 0)
         next_week_num = completed + 1
 
@@ -121,15 +121,15 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
                     "is_last": next_week_num >= curriculum.get("total_weeks", 24)
                 }
 
-        # Если план закончился
+        # If the plan is over
         return {
             "week": next_week_num,
-            "topics": ["Итоговый проект", "Свободное общение"],
+            "topics": ["Final Project", "Free Communication"],
             "is_last": True
         }
 
     # =================================================================
-    # Основной публичный метод
+    # Main public method
     # =================================================================
     def plan_curriculum(
         self,
@@ -137,34 +137,34 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
         force_regenerate: bool = False
     ) -> Dict:
         """
-        Создаёт или обновляет учебный план и возвращает следующую тему.
+        Creates or updates a syllabus and returns the next topic.
         """
-        # 1. Загружаем профиль
+        # 1. Uploading a profile
         profile = self.db.get_student(student_id)
         if not profile:
-            return {"error": "Студент не найден", "student_id": student_id}
+            return {"error": "Student not found", "student_id": student_id}
 
-        # 2. Проверяем, есть ли уже план
+        # 2. Checking if there is already a plan
         existing = self.db.get_curriculum(student_id)
 
         if existing and not force_regenerate:
             curriculum = existing
-            logger.info(f"Используется существующий план для {student_id}")
+            logger.info(f"The existing plan is used for {student_id}")
         else:
-            logger.info(f"Генерируется новый учебный план для {student_id}")
+            logger.info(f"A new curriculum is being generated for {student_id}")
             curriculum = self._generate_curriculum_with_llm(profile)
             curriculum["student_id"] = student_id
             curriculum["completed_weeks"] = 0
             curriculum["created_at"] = datetime.utcnow().isoformat()
 
-        # 3. Определяем следующую неделю
+        # 3. Determine the next week
         next_lesson = self._find_next_week(curriculum)
 
-        # 4. Сохраняем (если обновляли)
+        # 4. Save (if updated)
         if not existing or force_regenerate:
             self.db.save_curriculum(student_id, curriculum)
 
-        # 5. Возвращаем результат
+        # 5. Return the result
         return {
             "student_id": student_id,
             "next_week": next_lesson["week"],
@@ -177,7 +177,7 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             "plan_is_new": not bool(existing) or force_regenerate
         }
 
-    # Удобный алиас
+    # Alias
     def get_next_topics(self, student_id: str) -> Dict:
-        """Быстро получить только следующую тему (без пересоздания плана)"""
+        """Quickly get only the next topic (without re-creating the plan)"""
         return self.plan_curriculum(student_id, force_regenerate=False)
