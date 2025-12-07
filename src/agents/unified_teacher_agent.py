@@ -23,11 +23,17 @@ class UnifiedTeacherAgent(BaseAgent):
     # =================================================================
     # 1. Exercise Alignment
     # =================================================================
-    def align_exercise(self, student_id: str, exercise: Dict[str, Any]) -> Dict[str, Any]:
+    def align_exercise(self, student_id: Optional[str], exercise: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyzes the exercise and the student's syllabus to find the best match.
         Fetches syllabus from DB.
+        If student_id is None, picks a random student.
         """
+        if not student_id:
+            student_id = self.db.get_random_student_id()
+            if not student_id:
+                return {"error": "Student ID not provided and no students found in database."}
+
         curriculum = self.db.get_curriculum(student_id)
         if not curriculum:
              return {"error": f"Curriculum not found for student {student_id}"}
@@ -66,11 +72,17 @@ Return JSON:
     # =================================================================
     # 2. Chat Evaluation
     # =================================================================
-    def evaluate_chat(self, student_id: str) -> Dict[str, Any]:
+    def evaluate_chat(self, student_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Evaluates Q&A pairs from a chat session.
         Fetches student answers from the database.
+        If student_id is None, picks a random student.
         """
+        if not student_id:
+            student_id = self.db.get_random_student_id()
+            if not student_id:
+                return {"error": "Student ID not provided and no students found in database."}
+
         chat_history = self.db.get_student_chat_history(student_id)
         
         if not chat_history:
@@ -135,11 +147,17 @@ Return JSON:
     # =================================================================
     # 3. Content Generation
     # =================================================================
-    def generate_content(self, student_id: str, request_params: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_content(self, student_id: Optional[str], request_params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generates a question/exercise based on the student's syllabus.
         Fetches syllabus from DB using student_id.
+        If student_id is None, picks a random student.
         """
+        if not student_id:
+            student_id = self.db.get_random_student_id()
+            if not student_id:
+                return {"error": "Student ID not provided and no students found in database."}
+
         curriculum = self.db.get_curriculum(student_id)
         if not curriculum:
              return {"error": f"Curriculum not found for student {student_id}"}

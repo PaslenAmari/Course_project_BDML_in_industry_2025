@@ -229,3 +229,15 @@ class LanguageLearningDB:
         except Exception as e:
             logger.error(f"Error saving chat evaluation: {e}")
             return False
+
+    def get_random_student_id(self) -> Optional[str]:
+        """Get a random student ID from the database."""
+        try:
+            pipeline = [{"$sample": {"size": 1}}]
+            result = list(self.db.students.aggregate(pipeline))
+            if result:
+                return result[0].get("student_id")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching random student: {e}")
+            return None
