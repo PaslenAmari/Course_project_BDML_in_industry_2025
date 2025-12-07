@@ -1,43 +1,28 @@
-"""
-MongoDB adapter for language learning system.
-Replaces PostgreSQL/SQLAlchemy version.
-Compatible with existing agents and schemas.
-"""
+# src/database/mongodb_adapter.py
 import logging
-from typing import List, Optional, Dict
+from typing import Optional, Dict
 from datetime import datetime
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError
 
 logger = logging.getLogger(__name__)
 
-
 class LanguageLearningDB:
-    """MongoDB adapter for language learning system"""
-    
+    """MongoDB adapter для системы изучения языков"""
+
     def __init__(self, database_url: str = "mongodb://localhost:27017"):
-        """Initialize MongoDB connection."""
         try:
             self.client = MongoClient(database_url, serverSelectionTimeoutMS=5000)
             self.db = self.client["language_learning"]
-            
-            # Check connection (lazy)
-            # self.client.admin.command('ping') # Uncomment if MongoDB is running
-            
-            logger.info("MongoDB connection established")
+            logger.info("MongoDB подключён успешно")
         except Exception as e:
-            logger.error(f"Failed to connect to MongoDB: {e}")
-            # Don't raise here to allow mock testing without real DB
-            # raise
+            logger.error(f"Не удалось подключиться к MongoDB: {e}")
 
     def get_student(self, student_id: str) -> Optional[Dict]:
-        """Get student profile from database."""
+        """Получить профиль студента"""
         try:
-            student = self.db.students.find_one({"_id": student_id})
-            if not student:
-                return None
-            return student
-        except Exception:
+            return self.db.students.find_one({"_id": student_id})
+        except Exception as e:
+            logger.error(f"Ошибка чтения студента {student_id}: {e}")
             return None
 
     def create_student(self, student_data: Dict) -> bool:
@@ -67,35 +52,35 @@ class LanguageLearningDB:
     def save_assessment_result(self, assessment_data: Dict) -> str:
         """Save assessment/quiz results."""
         try:
-            assessment_data["completed_at"] = datetime.utcnow()
-            result = self.db.assessment_results.insert_one(assessment_data)
-            return str(result.inserted_id)
+            profile["_id"] = profile.get("student_id") or profile["_id"]
+            profile.setdefault("created_at", datetime.utcnow())
+            profile["updated_at"] = datetime.utcnow()
+
+            self.db.students.update_one(
+                {"_id": profile["_id"]},
+                {"$set": profile},
+                upsert=True
+            )
+            logger.info(f"Студент {profile['_id']} создан/обновлён")
         except Exception as e:
-            logger.error(f"Error saving assessment: {e}")
-            return ""
-            
+            logger.error(f"Ошибка создания студента: {e}")
+
     def get_curriculum(self, student_id: str) -> Optional[Dict]:
-        """Получить текущий учебный план студента."""
         try:
-            doc = self.db.learning_plans.find_one({"student_id": student_id})
-            return doc
-        except Exception as e:
-            logger.error(f"Error getting curriculum for {student_id}: {e}")
+            return self.db.curriculums.find_one({"student_id": student_id})
+        except Exception:
             return None
 
-    def save_curriculum(self, student_id: str, curriculum: Dict) -> bool:
-        """
-        Сохранить или обновить учебный план для студента.
-        """
+    def save_curriculum(self, student_id: str, curriculum: Dict):
         try:
             curriculum["student_id"] = student_id
-            curriculum["updated_at"] = datetime.utcnow()
-            self.db.learning_plans.update_one(
+            curriculum["updated_at"] = datetime.utcnow().isoformat()
+            self.db.curriculums.update_one(
                 {"student_id": student_id},
                 {"$set": curriculum},
-                upsert=True,
+                upsert=True
             )
-            return True
+            logger.info(f"Учебный план сохранён для {student_id}")
         except Exception as e:
             logger.error(f"Error saving curriculum for {student_id}: {e}")
             return False
