@@ -3,7 +3,7 @@
 3rd semester course project Machine Learning for Industrial Data 
 
 **Students:**
-* Siraeva Gulnara
+* Siraeva Gulnara [PaslenAmari] (https://github.com/PaslenAmari)
 * Levon Abramian
 * Gaibaliev Emil
 * [Gleb Mikloshevich](https://github.com/GlebMikloshevich)

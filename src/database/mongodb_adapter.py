@@ -3,6 +3,7 @@ import logging
 from typing import Optional, Dict
 from datetime import datetime
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,102 @@ class LanguageLearningDB:
         except Exception as e:
             logger.error(f"Error creating student: {e}")
             return False
+        
+    def get_student_vocabulary(
+        self,
+        student_id: str,
+        limit: int = 20,
+    ) -> list[dict]:
+        """
+        Retrieve a student's personal vocabulary items from MongoDB.
+
+        Args:
+            student_id: Unique student identifier.
+            limit: Maximum number of vocabulary items to return.
+
+        Returns:
+            List of vocabulary documents sorted by recency.
+            Each item typically contains:
+            - word: target language word or phrase
+            - translation: student's L1 translation
+            - example: example sentence
+            - proficiency: estimated mastery score
+            - last_reviewed_at: timestamp of last review
+        """
+        try:
+            cursor = (
+                self.db.vocabulary
+                .find({"student_id": student_id})
+                .sort("last_reviewed_at", -1)
+                .limit(limit)
+            )
+            return list(cursor)
+        except Exception as exc:
+            logger.error(f"Error retrieving vocabulary for {student_id}: {exc}")
+            return []
+
+    def get_student_errors(
+        self,
+        student_id: str,
+        limit: int = 10,
+    ) -> list:
+        """
+        Retrieve recent errors/mistakes made by the student.
+
+        Args:
+            student_id: Student identifier.
+            limit: Maximum number of error records to return.
+
+        Returns:
+            List of error documents sorted by most recent first.
+            Each error typically contains:
+            - student_id: who made the error
+            - error_type: type of error (grammar, vocabulary, pronunciation, etc.)
+            - context: lesson or exercise where error occurred
+            - correction: what the correct answer should be
+            - created_at: when the error was recorded
+        """
+        try:
+            cursor = (
+                self.db.student_errors
+                .find({"student_id": student_id})
+                .sort("created_at", -1)
+                .limit(limit)
+            )
+            return list(cursor)
+        except Exception as e:
+            logger.error(f"Error retrieving errors for {student_id}: {e}")
+            return []
+    def save_lesson_session(self, lesson_data: Dict) -> str:
+        """
+        Save a completed lesson session to the database.
+
+        Args:
+            lesson_data: Dictionary containing lesson information:
+            - student_id: unique student identifier
+            - topic: lesson topic (e.g., "Present Simple Tense")
+            - outline: list of lesson steps/sections
+            - selected_tools: list of tools used (vocabulary_search, generate_exercise, etc.)
+            - difficulty_level: proficiency level (1-5)
+            - phase: lesson phase (new_content, review, practice)
+            - has_review: boolean indicating if review materials were included
+            - duration_minutes: estimated lesson duration
+            - exercise: exercise data (optional)
+            - dialogue: dialogue data (optional)
+
+        Returns:
+            Lesson session ID (MongoDB ObjectId as string) if successful, empty string otherwise.
+        """
+        try:
+            lesson_data["created_at"] = datetime.utcnow()
+            result = self.db.lesson_sessions.insert_one(lesson_data)
+            logger.info(f"Lesson session saved for {lesson_data.get('student_id')}: {result.inserted_id}")
+            return str(result.inserted_id)
+        except Exception as e:
+            logger.error(f"Error saving lesson session: {e}")
+            return ""
+
+
 
     def save_assessment_result(self, assessment_data: Dict) -> str:
         """Save assessment/quiz results."""
@@ -100,7 +197,7 @@ class LanguageLearningDB:
             logger.error(f"Error saving chat interaction: {e}")
             return False
 
-    def get_student_chat_history(self, student_id: str, limit: int = 10) -> List[Dict[str, str]]:
+    def get_student_chat_history(self, student_id: str, limit: int = 10):
         """
         Get recent chat history for a student.
         Returns list of {"question": "...", "answer": "..."}
