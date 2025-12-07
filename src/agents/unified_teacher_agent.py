@@ -23,10 +23,17 @@ class UnifiedTeacherAgent(BaseAgent):
     # =================================================================
     # 1. Exercise Alignment
     # =================================================================
-    def align_exercise(self, syllabus: List[Dict[str, Any]], exercise: Dict[str, Any]) -> Dict[str, Any]:
+    def align_exercise(self, student_id: str, exercise: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Analyzes the exercise and syllabus to find the best match.
+        Analyzes the exercise and the student's syllabus to find the best match.
+        Fetches syllabus from DB.
         """
+        curriculum = self.db.get_curriculum(student_id)
+        if not curriculum:
+             return {"error": f"Curriculum not found for student {student_id}"}
+        
+        syllabus = curriculum.get("topics_by_week", [])
+
         if self.llm is None:
             logger.warning("No LLM, returning mock alignment.")
             return {
@@ -38,7 +45,7 @@ class UnifiedTeacherAgent(BaseAgent):
 
         prompt = f"""
 You are an expert curriculum developer.
-Determine where this exercise fits into the syllabus.
+Determine where this exercise fits into the provided syllabus.
 
 Syllabus:
 {json.dumps(syllabus, indent=2, ensure_ascii=False)}
@@ -69,11 +76,16 @@ Return JSON:
         if not chat_history:
             logger.warning(f"No chat history found for student {student_id}")
             return {"error": "No chat history found"}
+
         if self.llm is None:
             logger.warning("No LLM, returning mock evaluation.")
             result = {
                 "overall_score": 85,
-                "detailed_feedback": "MOCK: Good job! Your grammar is solid, but watch out for tenses. I like how you used vocabulary X.",
+                "detailed_feedback": "MOCK: Good job! Your grammar is solid, but watch out for tenses. To improve, practice past simple forms.",
+                "all_errors": [
+                     {"question": "...", "error": "...", "correction": "..."}
+                ],
+                "improvement_plan": "Focus on irregular verbs.",
                 "corrections": [],
                 "follow_up_questions": [
                     "Can you tell me more about ...?",
@@ -82,30 +94,32 @@ Return JSON:
             }
         else:
             prompt = f"""
-You are an expert, encouraging, and detailed language tutor.
-Evaluate the following student answers deeply.
+You are an expert, encouraging, but rigorous language tutor.
+Evaluate the following student answers based on the provided Chat History.
 
 Chat History:
 {json.dumps(chat_history, indent=2, ensure_ascii=False)}
 
 Instructions:
-1. Analyze grammatical accuracy, vocabulary, and context relevance.
-2. Provide DETAILED feedback explaining the rules behind any errors.
-3. Mention specific specific praise for good usage.
-4. Generate 2-3 FOLLOW-UP QUESTIONS to test the student's understanding of these topics or to continue the conversation naturally.
+1. Identify **EVERY** error (grammatical, lexical, spelling).
+2. For each error, explain **WHY** it is wrong and what the rule is.
+3. Provide a section on **HOW TO IMPROVE** based on these specific mistakes (e.g., "Review Present Perfect", "Practice prepositions").
+4. Be encouraging but honest about the score.
 
 Return JSON:
 {{
   "overall_score": (0-100),
-  "detailed_feedback": "Comprehensive explanation of performance...",
-  "corrections": [
+  "detailed_feedback": "General summary of performance.",
+  "all_errors": [
     {{
-       "index": (int),
-       "is_correct": (bool),
-       "correction": (string or null),
-       "explanation": (string)
+       "question_index": (int),
+       "student_answer": (string),
+       "error_description": (string),
+       "correction": (string),
+       "rule_explanation": (string)
     }}
   ],
+  "improvement_plan": "Specific actionable advice...",
   "follow_up_questions": ["Question 1", "Question 2"]
 }}
 """
@@ -121,15 +135,22 @@ Return JSON:
     # =================================================================
     # 3. Content Generation
     # =================================================================
-    def generate_content(self, syllabus: List[Dict[str, Any]], request_params: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_content(self, student_id: str, request_params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Generates a question/exercise based on the syllabus.
+        Generates a question/exercise based on the student's syllabus.
+        Fetches syllabus from DB using student_id.
         """
+        curriculum = self.db.get_curriculum(student_id)
+        if not curriculum:
+             return {"error": f"Curriculum not found for student {student_id}"}
+        
+        syllabus = curriculum.get("topics_by_week", [])
+        
         target_week = request_params.get("week")
         week_data = next((w for w in syllabus if w.get("week") == target_week), None)
         
         if not week_data:
-            return {"error": f"Week {target_week} not found in syllabus"}
+            return {"error": f"Week {target_week} not found in student's syllabus"}
             
         topics = week_data.get("topics", [])
         
