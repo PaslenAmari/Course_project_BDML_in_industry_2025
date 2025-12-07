@@ -58,8 +58,9 @@ class CurriculumPlannerAgent(BaseAgent):
                 for i in range(24)
             ]
         }
-
-    def _generate_curriculum_with_llm(self, profile: Dict) -> Dict:
+    
+   
+    def _generate_curriculum_with_llm(self, profile: Dict, total_weeks: int = 24) -> Dict:
         """Generating the perfect plan for Qwen3-32B"""
         lang = profile.get("target_language", "English")
         level = profile.get("current_level", 1)
@@ -72,12 +73,12 @@ Student level: {cefr}
 Goal: {goals}
 Language: {lang}
 
-Create a 24-week course plan. Write names of topics only in English language. 1-2 topics per week.
+Create a {total_weeks}-week course plan. Write names of topics only in English language. 1-2 topics per week.
 
 ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO explanations:
 
 {{
-  "total_weeks": 24,
+  "total_weeks": {total_weeks},
   "language": {lang},
   "level_from": "{cefr}",
   "level_to": "C1",
@@ -86,7 +87,7 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
     {{"week": 2, "topics": ["Numbers 1-100", "Telling Time", "Days & Months"]}},
     {{"week": 3, "topics": ["Family Members", "Possessive Adjectives"]}},
     {{"week": 4, "topics": ["Daily Routine", "Present Simple"]}},
-    // ... and so on until week 24. The above is just an example; you don't have to use these exact topics; use your level and goal as a guide.
+    // ... and so on until week {total_weeks}. The above is just an example; you don't have to use these exact topics; use your level and goal as a guide.
   ]
 }}"""
 
@@ -134,6 +135,7 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
     def plan_curriculum(
         self,
         student_id: str,
+        total_weeks : int=24,
         force_regenerate: bool = False
     ) -> Dict:
         """
@@ -152,7 +154,7 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             logger.info(f"The existing plan is used for {student_id}")
         else:
             logger.info(f"A new curriculum is being generated for {student_id}")
-            curriculum = self._generate_curriculum_with_llm(profile)
+            curriculum = self._generate_curriculum_with_llm(profile, total_weeks= {total_weeks})
             curriculum["student_id"] = student_id
             curriculum["completed_weeks"] = 0
             curriculum["created_at"] = datetime.utcnow().isoformat()
