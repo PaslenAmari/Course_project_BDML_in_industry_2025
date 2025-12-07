@@ -1,16 +1,18 @@
 import base64
 import io
+import logging
 import os
+
 from uuid import uuid4
 
 import numpy as np
 import pymupdf
+
 from chromadb import Client
 from chromadb.config import Settings
 from openai import OpenAI
 from PIL import Image
 from yandex_cloud_ml_sdk import YCloudML
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,9 @@ doc_embedding_model = sdk.models.text_embeddings(f"emb://{YANDEX_FOLDER_ID}/text
 chroma = Client(Settings(anonymized_telemetry=False))
 collection = chroma.get_or_create_collection(
     name=CHROMA_COLLECTION_NAME,
-    metadata={"hnsw:space": "cosine"}
+    metadata={
+        "hnsw:space": "cosine",
+    },
 )
 
 def extract_text_vlm(base64_image: str) -> str:
@@ -49,23 +53,23 @@ def extract_text_vlm(base64_image: str) -> str:
                 "content": [
                     {
                         "type": "image_url",
-                        "image_url": f"data:image/jpeg;base64,{base64_image}"
+                        "image_url": f"data:image/jpeg;base64,{base64_image}",
                     },
                     {
                         "type": "text",
-                        "text": "Extract all text from this PDF. Preserve reading order."
-                    }
-                ]
-            }
-        ]
+                        "text": "Extract all text from this PDF. Preserve reading order.",
+                    },
+                ],
+            },
+        ],
     )
 
     return response.choices[0].message.content
 
-def get_text_from_pdf_doc_vlm(pdf_doc) -> str:
+def get_text_from_pdf_doc_vlm(pdf_doc: pymupdf.Document) -> str:
     texts = []
     for i, page in enumerate(pdf_doc):
-        
+
         pix = page.get_pixmap(dpi=144)
         mode = "RGBA" if pix.alpha else "RGB" if pix.colorspace.n >= 3 else "L"
         image = Image.frombytes(mode, [pix.width, pix.height], pix.samples).conver("GGB")
@@ -73,15 +77,15 @@ def get_text_from_pdf_doc_vlm(pdf_doc) -> str:
         buffer = io.BytesIO()
         image.save(buffer, format="png")
         img_bytes = buffer.getvalue()
-        base64_image = base64.b64encode(img_bytes).decode('utf-8')
+        base64_image = base64.b64encode(img_bytes).decode("utf-8")
         text = extract_text_vlm(base64_image)
         texts.append(text)
         logger.info(f"Processed page {i+1}/{len(pdf_doc)}.")
-    
-    return "\n".join(texts)
-    
 
-def chunk_text(text, chunk_size=1000, overlap=150):
+    return "\n".join(texts)
+
+
+def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 150) -> list[str]:
     chunks = []
     start = 0
     while start < len(text):
@@ -93,13 +97,13 @@ def chunk_text(text, chunk_size=1000, overlap=150):
     return chunks
 
 
-def save_chunks_chroma(chunks):
+def save_chunks_chroma(chunks: list[str]) -> None:
     embeddings = [np.array(doc_embedding_model.run(chunk)) for chunk in chunks]
     ids = [str(uuid4()) for _ in chunks]
     collection.add(
         ids=ids,
         embeddings=embeddings,
-        documents=chunks
+        documents=chunks,
     )
 
     logger.info(f"Saved {len(chunks)} chunks in Chroma.")
@@ -110,4 +114,3 @@ if __name__ == "__main__":
     text = get_text_from_pdf_doc_vlm(doc)
     chunks = chunk_text(text)
     save_chunks_chroma(save_chunks_chroma)
-    
