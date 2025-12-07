@@ -52,10 +52,10 @@ students_to_create = [
     }
 ]
 
-print("Создаём/обновляем студентов и генерируем планы...\n")
+print("Create/update students and generate plans...\n")
 for student in students_to_create:
     sid = student["student_id"]
-    print(f"Обрабатываем: {student['name']} ({student['target_language']})...")
+    print(f"Processing: {student['name']} ({student['target_language']})...")
 
     # Создаём студента в базе (если ещё нет)
     db.create_student(student.copy())
@@ -63,7 +63,7 @@ for student in students_to_create:
     # Генерируем план (force_regenerate=True — всегда свежий)
     result = planner.plan_curriculum(sid, force_regenerate=True)
 
-    print(f"   Готово! Неделя {result['next_week']}: {', '.join(result['next_topics'])}")
+    print(f"   Done! Week {result['next_week']}: {', '.join(result['next_topics'])}")
     time.sleep(0.5)  # чтобы не спамить
 
 print("\n" + "="*100)
@@ -79,20 +79,20 @@ for student in all_students:
     curriculum = all_curriculums.get(sid, {})
     topics = curriculum.get("topics_by_week", [])
 
-    print(f"\nСтудент: {student.get('name', 'Без имени')} | ID: {sid}")
-    print(f"Язык: {student.get('target_language')} | Уровень: {student.get('current_level', '?')}/6")
-    print(f"Цель: {student.get('goals', '-')}")
-    print(f"Стиль обучения: {student.get('learning_style', '-')}")
-    print(f"План: {curriculum.get('level_from', '?')} to {curriculum.get('level_to', '?')} | {len(topics)} недель")
+    print(f"\nStudent: {student.get('name', 'No name')} | ID: {sid}")
+    print(f"Language: {student.get('target_language')} | Level: {student.get('current_level', '?')}/6")
+    print(f"Goal: {student.get('goals', '-')}")
+    print(f"Style: {student.get('learning_style', '-')}")
+    print(f"Plan: {curriculum.get('level_from', '?')} to {curriculum.get('level_to', '?')} | {len(topics)} weeks")
 
     if topics:
-        print("   Первые 5 недель:")
+        print("   First 5 weeks:")
         for w in topics[:24]:
             print(f"     Week {w['week']:2d} → {', '.join(w['topics'])}")
         # if len(topics) > 5:
         #     print(f"     ... и ещё {len(topics)-5} недель до Week {topics[-1]['week']}")
     else:
-        print("   План ещё не создан")
+        print("   The plan has not yet been created.")
 
 print("\n" + "="*100)
-print("Готово! Все данные выведены.")
+print("Done! All data is displayed..")
