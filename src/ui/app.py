@@ -19,6 +19,11 @@ BACKGROUND_MAP = {
 
 DEFAULT_BG = "background/Learning_room.jpg"
 
+# # ============================================================================
+# # CURRICULUM PLANNER SECTION
+# # ============================================================================
+# # Allows students to generate a personalized 24-week learning curriculum
+# # based on their proficiency level, goals, and target language.
 
 def set_background(image_path: str):
     img_path = Path(image_path)
