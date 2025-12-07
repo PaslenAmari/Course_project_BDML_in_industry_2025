@@ -72,7 +72,7 @@ Student level: {cefr}
 Goal: {goals}
 Language: {lang}
 
-Create a 24-week course plan in english language. 1-2 topics per week.
+Create a 24-week course plan. Write names of topics only in English language. 1-2 topics per week.
 
 ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO explanations:
 
