@@ -1,8 +1,10 @@
 import logging
 import os
 
-from chromadb import Client
-from langgraph.graph import END, StateGraph
+import numpy as np
+
+from chromadb import PersistentClient
+from langgraph.graph import END, START, StateGraph
 from openai import OpenAI
 from yandex_cloud_ml_sdk import YCloudML
 
@@ -11,23 +13,28 @@ from src.agents.base_agent import BaseAgent
 logger = logging.getLogger(__name__)
 
 
-class ResearchState(dict):
-    """
-    Fields:
-        language: str ("english", "espanion", "polish", ...)
-        topic: str ("travel", "computer science", "food", ...)
-        level: str ("a1", "b2", "c1", ...)
-        reformatted_query: str
-        db_results: list[str]
-        final_text: str
-    """
-    pass
+"""
+Agent state params
+Fields:
+    language: str ("english", "espanion", "polish", ...)
+    topic: str ("travel", "computer science", "food", ...)
+    level: str ("a1", "b2", "c1", ...)
+    reformatted_query: str
+    db_results: list[str]
+    final_text: str
+"""
 
 
 class ResearchAgent(BaseAgent):
     def __init__(self, chroma_collection_name: str = "language_books") -> None:
         super().__init__()
-        self.chroma = Client().get_collection(chroma_collection_name)
+        self.chroma_collection = PersistentClient(
+            path=os.environ.get("CHROMA_PATH"),
+        ).get_or_create_collection(
+            chroma_collection_name,
+            metadata={"hnsw:space": "cosine"},
+        )
+
         self.client = OpenAI(
             api_key=os.environ.get("LITELLM_API_KEY"),
             base_url=os.environ.get("LITELLM_BASE_URL"),
@@ -43,19 +50,20 @@ class ResearchAgent(BaseAgent):
 
 
         # graph
-        graph = StateGraph(ResearchState)
+        graph = StateGraph(dict)
         graph.add_node("reformat", self.reformat_query)
         graph.add_node("retrieval", self.retrieve_from_db)
         graph.add_node("synthesis", self.synthesize_output)
 
-        graph.set_entry_point("reformat")
+        # graph.set_entry_point("reformat")
+        graph.add_edge(START, "reformat")
         graph.add_edge("reformat", "retrieval")
         graph.add_edge("retrieval", "synthesis")
         graph.add_edge("synthesis", END)
 
         self.app = graph.compile()
 
-    def reformat_query(self, state: ResearchState) -> ResearchState:
+    def reformat_query(self, state: dict) -> dict:
         prompt = (
             "You are a query-optimizer. ",
             "User wants material on a topic. ",
@@ -72,20 +80,22 @@ class ResearchAgent(BaseAgent):
         state["reformatted_query"] = self.invoke_llm(prompt).strip()
         return state
 
-    def retrieve_from_db(self, state: ResearchState) -> ResearchState:
+    def retrieve_from_db(self, state: dict) -> dict:
         query = state["reformatted_query"]
 
         logger.info(f"Searching Chroma with: {query}")
-        querry_embedding = self.doc_embedding_model.run(query)
+        querry_embedding = np.array(self.doc_embedding_model.run(query))
 
-        # TODO(Gleb): query chroma
-        results = ...
-        docs = results.get("documents", [[]])[0]
-
-        state["db_results"] = docs
+        # NOTE: use metadata for better search. where={"language": "english"},
+        results = self.chroma_collection.query(
+            query_embeddings=querry_embedding,
+            n_results=10,
+        )
+        text_results = "\n".join(results["documents"][0])
+        state["db_results"] = text_results
         return state
 
-    def synthesize_output(self, state: ResearchState) -> ResearchState:
+    def synthesize_output(self, state: dict) -> dict:
         retrieved = "\n\n".join(state["db_results"])
 
         prompt = (
@@ -111,11 +121,11 @@ class ResearchAgent(BaseAgent):
         return state
 
     def run(self, language: str, topic: str, level: str) -> str:
-        initial = ResearchState({
+        initial = {
             "language": language,
             "topic": topic,
             "level": level,
-        })
+        }
 
         final_state = self.app.invoke(initial)
         return final_state["final_text"]
