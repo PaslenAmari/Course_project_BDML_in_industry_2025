@@ -113,4 +113,4 @@ if __name__ == "__main__":
     doc = pymupdf.open(doc_path)
     text = get_text_from_pdf_doc_vlm(doc)
     chunks = chunk_text(text)
-    save_chunks_chroma(save_chunks_chroma)
+    save_chunks_chroma(chunks)
