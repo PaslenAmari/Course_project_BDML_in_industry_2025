@@ -1,3 +1,4 @@
+# language_tools.py
 """
 Language-specific tools for agents.
 
@@ -89,16 +90,10 @@ class LanguageTools:
     ) -> Dict:
         """
         Generate an exercise asynchronously.
-
-        Args:
-            topic: Exercise topic
-            exercise_type: Type (vocabulary, grammar, dialogue, etc.)
-            level: Difficulty level
-
-        Returns:
-            Exercise data dictionary
         """
         try:
+            import uuid
+            
             prompt = f"""
             Generate a {exercise_type} exercise for learning {topic}.
             
@@ -106,35 +101,35 @@ class LanguageTools:
             
             Return as JSON:
             {{
-              "exercise_id": "ex_123",
-              "type": "{exercise_type}",
-              "task": "The main task/question",
-              "instructions": "Clear instructions for the student",
-              "difficulty": {level},
-              "example": "An example if applicable",
-              "correct_answer": "The correct answer",
-              "hints": ["Hint 1", "Hint 2"]
+            "exercise_id": "ex_{uuid.uuid4().hex[:8]}",
+            "type": "{exercise_type}",
+            "task": "The main task/question",
+            "instructions": "Clear instructions for the student",
+            "difficulty": {level},
+            "example": "An example if applicable",
+            "correct_answer": "The correct answer",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "explanation": "Why this is correct"
             }}
             """
-
+            
             response = self.llm.invoke(prompt)
             content = response.content
-
-            # Extract JSON
+            
             start = content.find("{")
             end = content.rfind("}") + 1
-
+            
             if start >= 0 and end > start:
                 exercise = json.loads(content[start:end])
-                logger.info(f"Generated {exercise_type} exercise for topic '{topic}'")
                 return exercise
             else:
-                logger.warning("Could not extract JSON from exercise generation")
                 return {"error": "JSON parsing failed"}
-
+        
         except Exception as exc:
-            logger.error(f"Error generating exercise: {exc}")
             return {"error": str(exc)}
+
+    
+
 
     def generate_dialogue(
         self,
@@ -228,3 +223,10 @@ class LanguageTools:
         except Exception as exc:
             logger.error(f"Error explaining grammar: {exc}")
             return "Error generating explanation"
+        
+
+        
+
+
+
+

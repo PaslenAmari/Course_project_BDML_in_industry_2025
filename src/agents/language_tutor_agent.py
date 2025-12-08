@@ -22,6 +22,7 @@ from src.database.mongodb_adapter import LanguageLearningDB
 from src.database.chroma_db import ChromaVectorDB
 
 logger = logging.getLogger(__name__)
+# logger = tutor_logger 
 
 
 class LanguageTutorAgent(BaseAgent):
@@ -357,6 +358,42 @@ class LanguageTutorAgent(BaseAgent):
             logger.error(f"Error saving lesson: {exc}")
 
         return state
+
+
+    def chat(self, message: str) -> str:
+        """
+        Chat interface for Streamlit.
+        Wraps teach() method to provide a conversational experience.
+        
+        Args:
+            message: User input (lesson topic or question)
+        
+        Returns:
+            Formatted response with lesson information
+        """
+        try:
+            result = self.teach(
+                student_id="default_student",
+                topic=message
+            )
+            
+            # Format response as readable text
+            output = f"""
+    **Lesson: {result.get('topic', 'N/A')}**
+
+     **Outline:**
+    {chr(10).join(['• ' + item for item in result.get('outline', [])])}
+
+     **Selected Tools:** {', '.join(result.get('selected_tools', []))}
+
+    ⏱ **Duration:** {result.get('lesson_metadata', {}).get('duration_minutes', 'N/A')} minutes
+
+     **Phase:** {result.get('lesson_metadata', {}).get('phase', 'N/A')}
+    """
+            return output.strip()
+        except Exception as e:
+            return f" Tutor error: {str(e)}"
+
 
     def teach(
         self,

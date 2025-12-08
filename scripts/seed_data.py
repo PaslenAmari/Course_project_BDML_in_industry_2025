@@ -6,19 +6,25 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from src.database.chroma_db import ChromaVectorDB
 from src.database.mongodb_adapter import LanguageLearningDB
-from src import config
+import config
 
 def seed():
     print("Seeding data...")
     
     # 1. Seed MongoDB (Student)
     mongo = LanguageLearningDB(config.MONGODB_URL)
-    mongo.create_student({
-        "student_id": "student_001",
-        "name": "Test Student",
-        "current_level": 2,
-        "target_language": "English"
-    })
+    students = []
+    for i in range(1, 11):
+        students.append({
+            "student_id": f"student_{i:03d}",
+            "name": f"Student {i}",
+            "current_level": (i % 3) + 1, # Levels 1, 2, 3
+            "target_language": "English"
+        })
+
+    for s in students:
+        mongo.create_student(s)
+        print(f"Created student: {s['name']} ({s['student_id']})")
     
     # 2. Seed Chroma (Materials for RAG)
     chroma = ChromaVectorDB(config.CHROMA_PERSIST_DIR)

@@ -15,7 +15,7 @@ load_dotenv(ENV_PATH)
 def get_llm(mock: bool | None = None):
     api_key = os.getenv("LITELLM_API_KEY", "")
     base_url = os.getenv("LITELLM_BASE_URL", "http://a6k2.dgx:34000/v1")
-    model = os.getenv("MODEL_NAME", "qwen2.5-32b")
+    model = os.getenv("MODEL_NAME", "qwen3-32b")
 
     if mock is True or len(api_key) < 5:
         logger.warning("LLM running in MOCK mode (no real API calls).")
