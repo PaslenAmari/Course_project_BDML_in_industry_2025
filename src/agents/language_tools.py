@@ -87,31 +87,59 @@ class LanguageTools:
         topic: str,
         exercise_type: str,
         level: int,
+        count: int = 1,
     ) -> Dict:
         """
-        Generate an exercise asynchronously.
+        Generate one or more exercises asynchronously.
+        If count > 1, returns {"exercises": [list of exercises]}.
+        If count == 1, returns the single exercise dict.
         """
         try:
             import uuid
             
-            prompt = f"""
-            Generate a {exercise_type} exercise for learning {topic}.
-            
-            Level: {level}/5 (1=Beginner, 5=Advanced)
-            
-            Return as JSON:
-            {{
-            "exercise_id": "ex_{uuid.uuid4().hex[:8]}",
-            "type": "{exercise_type}",
-            "task": "The main task/question",
-            "instructions": "Clear instructions for the student",
-            "difficulty": {level},
-            "example": "An example if applicable",
-            "correct_answer": "The correct answer",
-            "options": ["Option A", "Option B", "Option C", "Option D"],
-            "explanation": "Why this is correct"
-            }}
-            """
+            if count > 1:
+                prompt = f"""
+                Generate {count} {exercise_type} exercises for learning {topic}.
+                
+                Level: {level}/5 (1=Beginner, 5=Advanced)
+                
+                Return as JSON with a key "exercises" containing a list of {count} exercise objects.
+                Each object must follow this structure:
+                {{
+                "exercise_id": "ex_<unique_id>",
+                "type": "{exercise_type}",
+                "task": "The main instruction (e.g., 'Fill in the blank', 'Find the mistake')",
+                "content": "The specific sentence, word, or dialogue snippet to analyze/modify. THIS IS MANDATORY.",
+                "instructions": "Additional usage details",
+                "difficulty": {level},
+                "correct_answer": "Correct Answer",
+                "options": ["Option A", "Option B", "Option C", "Option D"], 
+                "explanation": "Why this is correct"
+                }}
+                
+                Make sure 'options' are provided if it is a multiple choice question.
+                Make sure 'content' contains the actual text the student needs to read or work on.
+                """
+            else:
+                prompt = f"""
+                Generate a {exercise_type} exercise for learning {topic}.
+                
+                Level: {level}/5 (1=Beginner, 5=Advanced)
+                
+                Return as JSON:
+                {{
+                "exercise_id": "ex_{uuid.uuid4().hex[:8]}",
+                "type": "{exercise_type}",
+                "task": "The main instruction",
+                "content": "The specific sentence/text to analyze",
+                "instructions": "Detailed instructions",
+                "difficulty": {level},
+                "example": "An example if applicable",
+                "correct_answer": "The correct answer",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "explanation": "Why this is correct"
+                }}
+                """
             
             response = self.llm.invoke(prompt)
             content = response.content
@@ -120,8 +148,14 @@ class LanguageTools:
             end = content.rfind("}") + 1
             
             if start >= 0 and end > start:
-                exercise = json.loads(content[start:end])
-                return exercise
+                data = json.loads(content[start:end])
+                
+                # If we requested 1 but got a wrapper (edge case), handle it
+                if count == 1 and "exercises" in data and isinstance(data["exercises"], list):
+                     if len(data["exercises"]) > 0:
+                        return data["exercises"][0]
+                
+                return data
             else:
                 return {"error": "JSON parsing failed"}
         

@@ -181,8 +181,43 @@ st.title("Language Learning Platform")
 
 db = LanguageLearningDB(database_url="mongodb://localhost:27017")
 
+# --- RESET LOGIC FOR CODE UPDATES ---
+# Increment this version whenever you modify agent code to force a reload
+SYSTEM_VERSION = "1.8" 
+
+if "system_version" not in st.session_state or st.session_state.system_version != SYSTEM_VERSION:
+    st.info("System updated. Reloading modules and agents...")
+    
+    # Force reload of backend modules to pick up code changes
+    import importlib
+    import src.agents.language_tools
+    import src.agents.language_tutor_agent
+    import src.database.mongodb_adapter
+    
+    importlib.reload(src.agents.language_tools)
+    importlib.reload(src.agents.language_tutor_agent)
+    importlib.reload(src.database.mongodb_adapter)
+    
+    # Re-import classes from reloaded modules
+    from src.agents.language_tutor_agent import LanguageTutorAgent
+    from src.database.mongodb_adapter import LanguageLearningDB
+    
+    # Re-initialize global DB with fresh class
+    db = LanguageLearningDB(database_url="mongodb://localhost:27017")
+    
+    keys_to_reset = ["tutor", "planner", "unified_agent", "quiz_session"]
+    for k in keys_to_reset:
+        if k in st.session_state:
+            del st.session_state[k]
+            
+    st.session_state.system_version = SYSTEM_VERSION
+    st.rerun()
+
 if "tutor" not in st.session_state:
     try:
+        # Re-import locally to ensure we use the fresh class definition
+        from src.agents.language_tutor_agent import LanguageTutorAgent
+        
         st.session_state.tutor = LanguageTutorAgent()
         st.session_state.planner = CurriculumPlannerAgent(database_url="mongodb://localhost:27017")
         st.session_state.unified_agent = UnifiedTeacherAgent(database_url="mongodb://localhost:27017")
@@ -292,6 +327,8 @@ if st.session_state.current_student:
         
         col1, col2, col3 = st.columns(3)
         
+        all_levels = ["A1", "A2", "B1", "B2", "C1", "C2"]
+        
         with col1:
             new_language = st.selectbox("New Language", 
                 ["English", "Spanish", "French", "German", "Chinese", "Japanese"],
@@ -299,22 +336,34 @@ if st.session_state.current_student:
         
         with col2:
             new_start_level = st.selectbox("Starting Level",
-                ["A1", "A2", "B1", "B2", "C1", "C2"],
+                all_levels,
                 key="new_start_level")
         
+        # Calculate valid target levels (must be > start level)
+        try:
+            start_idx = all_levels.index(new_start_level)
+            valid_targets = all_levels[start_idx + 1:]
+            if not valid_targets:
+                valid_targets = [new_start_level] # Fallback if C2 is selected
+        except ValueError:
+            valid_targets = all_levels
+
         with col3:
             new_target_level = st.selectbox("Target Level",
-                ["A2", "B1", "B2", "C1", "C2"],
+                valid_targets,
                 key="new_target_level")
         
         col1, col2 = st.columns(2)
         
         with col1:
             if st.button("Confirm", key="confirm_lang"):
+                # CEFR Mapping
+                LEVEL_MAP = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+                
                 updated_student = student_info.copy()
                 updated_student["target_language"] = new_language
-                updated_student["current_level"] = int(ord(new_start_level[0]) - ord('A')) + 1
-                updated_student["target_level"] = int(ord(new_target_level[0]) - ord('A')) + 1
+                updated_student["current_level"] = LEVEL_MAP.get(new_start_level, 1)
+                updated_student["target_level"] = LEVEL_MAP.get(new_target_level, 6)
                 
                 db.db.students.update_one(
                     {"student_id": student_id},
@@ -326,6 +375,7 @@ if st.session_state.current_student:
                 )
                 
                 st.session_state.curriculum = None
+                st.session_state.force_regen_flag = True # Force new plan calculation
                 st.session_state.current_student = updated_student
                 st.session_state.show_lang_picker = False
                 
@@ -363,16 +413,25 @@ if st.session_state.current_student:
         with col2:
             if st.button("Regenerate", key="regen_plan"):
                 st.session_state.curriculum = None
+                st.session_state.force_regen_flag = True
         
         if st.session_state.curriculum is None:
             with st.spinner("Generating your personalized curriculum..."):
                 try:
+                    # Check if we need to force regenerate
+                    should_force = st.session_state.get("force_regen_flag", False)
+                    
                     plan_result = st.session_state.planner.plan_curriculum(
                         student_id=student_id,
-                        force_regenerate=False,
+                        force_regenerate=should_force,
                         total_weeks=total_weeks
                     )
                     st.session_state.curriculum = plan_result
+                    
+                    # Reset flag after successful generation
+                    if should_force:
+                        st.session_state.force_regen_flag = False
+                        
                 except Exception as e:
                     st.error(f"Error generating plan: {e}")
                     plan_result = None
@@ -398,7 +457,8 @@ if st.session_state.current_student:
                 # Fallback: if 'topics_by_week' is missing (due to stale agent), fetch from DB
                 display_topics = plan_result.get("topics_by_week")
                 if not display_topics:
-                    full_curr = db.get_curriculum(student_id)
+                    current_lang = student_info.get("target_language", "English")
+                    full_curr = db.get_curriculum(student_id, language=current_lang)
                     if full_curr:
                         display_topics = full_curr.get("topics_by_week")
                 
@@ -418,6 +478,19 @@ if st.session_state.current_student:
     with tab2:
         st.header("Your Progress")
         
+        # Calculate Weekly Progress
+        current_lang = student_info.get("target_language", "English")
+        curriculum_data = db.get_curriculum(student_id, language=current_lang)
+        
+        current_week_display = 1
+        total_weeks_display = 24
+        
+        if curriculum_data:
+            completed = curriculum_data.get("completed_weeks", 0)
+            total = curriculum_data.get("total_weeks", 24)
+            current_week_display = completed + 1
+            total_weeks_display = total
+        
         stats = {
             "lessons_completed": db.db.lesson_sessions.count_documents(
                 {"student_id": student_id}
@@ -432,7 +505,7 @@ if st.session_state.current_student:
         
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Lessons Completed", stats["lessons_completed"])
+            st.metric("Current Week", f"{current_week_display} / {total_weeks_display}")
         with col2:
             st.metric("Vocabulary Learned", stats["vocab_count"])
         with col3:
@@ -440,7 +513,14 @@ if st.session_state.current_student:
         with col4:
             st.metric("Current Level", student_info.get("current_level", "N/A"))
         
-        st.info("More detailed analytics coming soon...")
+        # Progress Bar for Weeks
+        st.write("### Weekly Progression")
+        progress_val = min(1.0, (current_week_display - 1) / total_weeks_display)
+        st.progress(progress_val)
+        st.caption(f"You have completed {current_week_display - 1} out of {total_weeks_display} weeks in {current_lang}.")
+
+        st.divider()
+        st.info("Complete the 'Weekly Exam' in the Exercises tab to advance to the next week!")
     
     # TAB 3: UNIFIED TUTOR
     with tab3:
@@ -569,141 +649,256 @@ if st.session_state.current_student:
         
         st.info(f"📅 **Current Week {curr_week_num}**: {', '.join(curr_week_topics)}")
         
-        col1, col2 = st.columns(2)
-        with col1:
-             mode = st.radio("Mode", ["Practice", "Weekly Exam (Level Up)"], horizontal=True)
-             
-        with col2:
-             if mode == "Practice":
-                exercise_type = st.selectbox("Exercise Type", ["vocabulary", "grammar", "dialogue"])
-             else:
-                st.warning("Pass this exam to unlock the next week!")
-                exercise_type = "grammar" # Exam default
-        
-        if st.button("Generate New Exercise", key="gen_exercise"):
-            st.session_state.current_exercise = None
-        
-        if "current_exercise" not in st.session_state:
-            st.session_state.current_exercise = None
-        
-        if st.button("Generate", key="do_gen") or st.session_state.current_exercise is None:
-            with st.spinner("Generating exercise..."):
-                try:
-                    import asyncio
-                    
-                    topic_prompt = f"{student_info.get('target_language')} {exercise_type}"
-                    if curr_week_topics:
-                        topic_prompt += f" related to topics: {', '.join(curr_week_topics)}"
-                    
-                    if mode == "Weekly Exam (Level Up)":
-                        topic_prompt += ". Create a challenging comprehensive test question."
-                    
-                    exercise = asyncio.run(
-                        st.session_state.tutor.tools.generate_exercise(
-                            topic=topic_prompt,
-                            exercise_type=exercise_type,
-                            level=student_info.get('current_level', 3)
-                        )
-                    )
-                    
-                    # Tag exercise with mode
-                    exercise["mode"] = mode
-                    
-                    st.session_state.current_exercise = exercise
-                    st.session_state.exercise_answered = False
-                    
-                except Exception as e:
-                    st.error(f"Error generating exercise: {e}")
-        
-        if st.session_state.current_exercise:
-            ex = st.session_state.current_exercise
-            ex_mode = ex.get("mode", "Practice")
+        # Initialize quiz session state if not exists
+        if "quiz_session" not in st.session_state:
+            st.session_state.quiz_session = None
+
+        # --- SESSION NOT STARTED ---
+        if st.session_state.quiz_session is None:
+            col1, col2 = st.columns(2)
+            with col1:
+                mode = st.radio("Mode", ["Practice", "Weekly Exam (Level Up)"], horizontal=True)
+            with col2:
+                if mode == "Practice":
+                    exercise_type = st.selectbox("Exercise Type", ["vocabulary", "grammar", "dialogue"])
+                else:
+                    st.warning("Pass this exam (80%+) to unlock the next week!")
+                    exercise_type = "grammar" # Exam default
             
-            if "error" in ex:
-                st.error(f"Exercise generation error: {ex['error']}")
-            else:
-                if ex_mode == "Weekly Exam (Level Up)":
-                     st.write(f"### **WEEK {curr_week_num} EXAM** 🎓")
-                else:
-                     st.write(f"### **{ex.get('type', 'Exercise').upper()}**")
-                
-                st.write(f"**Task:** {ex.get('task', 'N/A')}")
-                st.write(f"**Instructions:** {ex.get('instructions', 'N/A')}")
-                
-                if 'options' in ex and ex['options']:
-                    st.write("**Choose your answer:**")
-                    answer = st.radio(
-                        label="Options:",
-                        options=ex['options'],
-                        key="exercise_answer"
-                    )
-                    answer_type = "choice"
-                else:
-                    st.write("**Your answer:**")
-                    answer = st.text_area(
-                        label="Type your answer here:",
-                        key="exercise_answer",
-                        height=100
-                    )
-                    answer_type = "text"
-                
-                if st.button("Check Answer", key="check_ans"):
-                    correct = ex.get('correct_answer', '')
-                    
-                    if answer_type == "choice":
-                        is_correct = answer == correct
-                    else:
-                        is_correct = answer.lower().strip() == correct.lower().strip()
-                    
-                    if is_correct:
-                        st.success("Correct!")
-                        st.balloons()
+            if st.button("Start Session (10 Questions)", key="start_session"):
+                with st.spinner("Generating 10 questions... This may take a moment."):
+                    try:
+                        import asyncio
                         
-                        # Save result
-                        db.db.exercise_results.insert_one({
-                            "student_id": student_id,
-                            "exercise_id": ex.get('exercise_id', 'unknown'),
-                            "exercise_type": exercise_type,
-                            "correct": True,
-                            "mode": ex_mode,
-                            "student_answer": answer,
-                            "created_at": datetime.datetime.utcnow()
-                        })
+                        topic_prompt = f"{student_info.get('target_language')} {exercise_type}"
+                        if curr_week_topics:
+                            topic_prompt += f" related to topics: {', '.join(curr_week_topics)}"
                         
-                        # LEVEL UP LOGIC
-                        if ex_mode == "Weekly Exam (Level Up)":
-                            st.toast("Level Up! Updating curriculum...")
-                            db.db.curriculums.update_one(
-                                {"student_id": student_id},
-                                {"$inc": {"completed_weeks": 1}}
+                        if mode == "Weekly Exam (Level Up)":
+                            topic_prompt += ". Create challenging comprehensive test questions."
+                        
+                        # Request 10 exercises
+                        result_data = asyncio.run(
+                            st.session_state.tutor.tools.generate_exercise(
+                                topic=topic_prompt,
+                                exercise_type=exercise_type,
+                                level=student_info.get('current_level', 3),
+                                count=10
                             )
-                            # Force refresh of curriculum in session
-                            st.session_state.curriculum = None
-                            st.balloons()
-                            st.success(f"🎉 You have passed Week {curr_week_num}! proceeding to Week {curr_week_num + 1}...")
+                        )
+                        
+                        exercises_list = []
+                        if "exercises" in result_data and isinstance(result_data["exercises"], list):
+                            exercises_list = result_data["exercises"]
+                        elif isinstance(result_data, list):
+                            exercises_list = result_data
+                        elif isinstance(result_data, dict) and "error" not in result_data:
+                            # Fallback if only 1 returned
+                            exercises_list = [result_data]
+                        
+                        if not exercises_list:
+                            st.error("Failed to generate exercises. Please try again.")
+                        else:
+                            # Initialize Session
+                            st.session_state.quiz_session = {
+                                "active": True,
+                                "questions": exercises_list,
+                                "total": len(exercises_list),
+                                "current_index": 0,
+                                "score": 0,
+                                "mode": mode,
+                                "exercise_type": exercise_type,
+                                "results": [], # To store correct/incorrect for each
+                                "completed": False
+                            }
                             st.rerun()
 
-                        st.session_state.exercise_answered = True
-                    else:
-                        st.error("Incorrect!")
-                        st.info(f"**Correct answer:** {correct}")
+                    except Exception as e:
+                        st.error(f"Error generating exercises: {e}")
+
+        # --- SESSION ACTIVE ---
+        elif st.session_state.quiz_session and not st.session_state.quiz_session["completed"]:
+            qs = st.session_state.quiz_session
+            idx = qs["current_index"]
+            total = qs["total"]
+            current_q = qs["questions"][idx]
+            
+            # Header Status
+            c1, c2, c3 = st.columns([1, 2, 1])
+            with c1:
+                st.metric("Question", f"{idx + 1} / {total}")
+            with c3:
+                st.metric("Score", f"{qs['score']} / {idx}") # Score so far
+            
+            # Progress bar
+            st.progress((idx) / total)
+            
+            st.markdown(f"### Question {idx + 1}")
+            
+            # Display the core content (sentence/text) if available
+            if current_q.get('content'):
+                st.info(current_q['content'], icon="📖")
+            
+            st.write(f"**Task:** {current_q.get('task', 'N/A')}")
+            st.write(f"**Instructions:** {current_q.get('instructions', 'N/A')}")
+            
+            # Input Area
+            user_answer = None
+            answer_submitted = False
+            
+            # We use a form or just keys to handle state
+            # Using a key based on index ensures fresh widget for each question
+            input_key = f"q_input_{idx}"
+            check_key = f"check_btn_{idx}"
+            next_key = f"next_btn_{idx}"
+            
+            # Determine input type
+            if 'options' in current_q and current_q['options']:
+                user_answer = st.radio(
+                    "Choose Option:",
+                    options=current_q['options'],
+                    key=input_key
+                )
+                answer_type = "choice"
+            else:
+                user_answer = st.text_area(
+                    "Your Answer:",
+                    height=100,
+                    key=input_key
+                )
+                answer_type = "text"
+            
+            # State for "Show Result" for THIS question
+            if f"q_result_{idx}" not in st.session_state:
+                st.session_state[f"q_result_{idx}"] = None
+            
+            current_result = st.session_state[f"q_result_{idx}"]
+            
+            if current_result is None:
+                if st.button("Check Answer", key=check_key):
+                    correct_val = current_q.get('correct_answer', '')
+                    is_correct = False
+                    
+                    if answer_type == "choice":
+                        # Handle cases like "B) My name is..." vs "B" or "My name is..."
+                        # We try to match:
+                        # 1. Exact match
+                        # 2. Content match (if correct answer is the text part)
+                        # 3. Letter match (if correct answer is 'B')
                         
-                        db.db.exercise_results.insert_one({
-                            "student_id": student_id,
-                            "exercise_id": ex.get('exercise_id', 'unknown'),
-                            "exercise_type": exercise_type,
-                            "correct": False,
-                            "mode": ex_mode,
-                            "student_answer": answer,
-                            "correct_answer": correct,
-                            "created_at": datetime.datetime.utcnow()
-                        })
+                        u_ans = user_answer.strip()
+                        c_ans = correct_val.strip()
+                        
+                        # Extract letter if present (e.g., "B) ...")
+                        u_letter = u_ans.split(')')[0].strip() if ')' in u_ans else u_ans
+                        
+                        is_correct = (u_ans == c_ans) or (u_letter == c_ans) or (u_ans in c_ans)
+                    else:
+                        is_correct = (user_answer.lower().strip() == correct_val.lower().strip())
                     
-                    st.info(f"**Explanation:** {ex.get('explanation', 'N/A')}")
+                    # Update Score
+                    if is_correct:
+                        qs["score"] += 1
+                        st.session_state[f"q_result_{idx}"] = "correct"
+                    else:
+                        st.session_state[f"q_result_{idx}"] = "incorrect"
                     
-                    if st.button("Next Exercise", key="next_ex"):
-                        st.session_state.current_exercise = None
-                        st.rerun()
+                    # Log result
+                    qs["results"].append({
+                        "question": idx + 1,
+                        "correct": is_correct,
+                        "user_answer": user_answer,
+                        "correct_answer": correct_val
+                    })
+                    
+                    # Save to DB (optional: save per question or at end)
+                    # Saving per question is safer for data loss
+                    db.db.exercise_results.insert_one({
+                        "student_id": student_id,
+                        "exercise_id": current_q.get('exercise_id', 'unknown'),
+                        "exercise_type": qs["exercise_type"],
+                        "correct": is_correct,
+                        "mode": qs["mode"],
+                        "session_index": idx + 1,
+                        "created_at": datetime.datetime.utcnow()
+                    })
+
+                    st.rerun()
+            else:
+                # Show Result Feedback
+                correct_val = current_q.get('correct_answer', '')
+                explanation = current_q.get('explanation', '')
+                
+                if current_result == "correct":
+                    st.success("✅ Correct!")
+                else:
+                    st.error("❌ Incorrect")
+                    st.info(f"Correct Answer: {correct_val}")
+                
+                if explanation:
+                    st.markdown(f"**Explanation:** {explanation}")
+                
+                # Next Button
+                if st.button("Next Question" if idx < total - 1 else "Finish Session", key=next_key):
+                    qs["current_index"] += 1
+                    if qs["current_index"] >= total:
+                        qs["completed"] = True
+                    st.rerun()
+        
+        # --- SESSION COMPLETED ---
+        elif st.session_state.quiz_session and st.session_state.quiz_session["completed"]:
+            qs = st.session_state.quiz_session
+            score = qs["score"]
+            total = qs["total"]
+            percent = (score / total) * 100
+            passed = percent >= 80
+            
+            st.markdown(f"## Session Complete! 🏁")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Final Score", f"{score} / {total}")
+            with col2:
+                st.metric("Percentage", f"{percent:.1f}%")
+            with col3:
+                st.metric("Result", "PASSED" if passed else "FAILED")
+            
+            st.divider()
+            
+            if passed:
+                st.balloons()
+                st.success("Congratulations! You achieved the target score.")
+                
+                if qs["mode"] == "Weekly Exam (Level Up)":
+                    # Check if we haven't already rewarded this session to prevent double updates on refresh
+                    if "rewarded" not in qs:
+                       qs["rewarded"] = True 
+                       
+                       current_lang = student_info.get("target_language", "English")
+                       
+                       # Ensure we update only the curriculum for this language
+                       db.db.curriculums.update_one(
+                           {
+                               "student_id": student_id,
+                               "language": current_lang
+                           },
+                           {"$inc": {"completed_weeks": 1}}
+                       )
+                       st.toast("Level Up! Next week unlocked.")
+                       st.session_state.curriculum = None # Force refresh
+                       st.success(f"🎉 You have officially passed Week {curr_week_num}! Proceeding to Week {curr_week_num + 1}...")
+            else:
+                st.error("You did not reach the 80% passing mark. Try again!")
+                st.write("Review your mistakes and start a new session.")
+            
+            if st.button("Return to Menu", key="end_session_btn"):
+                # Clear session keys
+                keys_to_clear = [k for k in st.session_state.keys() if k.startswith("q_input_") or k.startswith("q_result_") or k.startswith("check_btn_")]
+                for k in keys_to_clear:
+                    del st.session_state[k]
+                
+                st.session_state.quiz_session = None
+                st.rerun()
 
 else:
     st.info("Please enter your name and create your profile to start learning.")
