@@ -162,22 +162,32 @@ class LanguageLearningDB:
         except Exception as e:
             logger.error(f"Ошибка создания студента: {e}")
 
-    def get_curriculum(self, student_id: str) -> Optional[Dict]:
+    def get_curriculum(self, student_id: str, language: Optional[str] = None) -> Optional[Dict]:
         try:
-            return self.db.curriculums.find_one({"student_id": student_id})
+            query = {"student_id": student_id}
+            if language:
+                query["language"] = language
+            return self.db.curriculums.find_one(query)
         except Exception:
             return None
 
     def save_curriculum(self, student_id: str, curriculum: Dict):
         try:
             curriculum["student_id"] = student_id
+            language = curriculum.get("language")
+            
             curriculum["updated_at"] = datetime.utcnow().isoformat()
+            
+            query = {"student_id": student_id}
+            if language:
+                query["language"] = language
+                
             self.db.curriculums.update_one(
-                {"student_id": student_id},
+                query,
                 {"$set": curriculum},
                 upsert=True
             )
-            logger.info(f"Учебный план сохранён для {student_id}")
+            logger.info(f"Учебный план сохранён для {student_id} (Language: {language})")
         except Exception as e:
             logger.error(f"Error saving curriculum for {student_id}: {e}")
             return False

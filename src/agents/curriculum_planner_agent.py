@@ -31,7 +31,7 @@ class CurriculumPlannerAgent(BaseAgent):
         self.db = LanguageLearningDB(database_url)
         logger.info("CurriculumPlannerAgent successfully initialized")
 
-    def _get_fallback_curriculum(self, language: str = "English") -> Dict:
+    def _get_fallback_curriculum(self, language: str = "English", level_from: str = "A1", level_to: str = "B2") -> Dict:
         """Backup plan in case LLM doesn't respond"""
         topics = [
             ["Greetings", "Introduction"],
@@ -50,8 +50,8 @@ class CurriculumPlannerAgent(BaseAgent):
         return {
             "total_weeks": 24,
             "language": language,
-            "level_from": "A1",
-            "level_to": "B2+",
+            "level_from": level_from,
+            "level_to": level_to,
             "generated_at": datetime.utcnow().isoformat(),
             "topics_by_week": [
                 {"week": i + 1, "topics": topics[i % len(topics)]}
@@ -64,12 +64,18 @@ class CurriculumPlannerAgent(BaseAgent):
         """Generating the perfect plan for Qwen3-32B"""
         lang = profile.get("target_language", "English")
         level = profile.get("current_level", 1)
+        target_lvl_int = profile.get("target_level", 5)
+        
+        cefr_scale = ["A1", "A2", "B1", "B2", "C1", "C2"]
+        cefr_current = cefr_scale[min(level - 1, 5)]
+        cefr_target = cefr_scale[min(target_lvl_int - 1, 5)]
+        
         goals = profile.get("goals", "General English fluency")
-        cefr = ["A1", "A2", "B1", "B2", "C1", "C2"][min(level - 1, 5)]
 
         prompt = f"""You are the world's best language curriculum designer.
 
-Student level: {cefr}
+Student level: {cefr_current}
+Target level: {cefr_target}
 Goal: {goals}
 Language: {lang}
 
@@ -79,9 +85,9 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
 
 {{
   "total_weeks": {total_weeks},
-  "language": {lang},
-  "level_from": "{cefr}",
-  "level_to": "C1",
+  "language": "{lang}",
+  "level_from": "{cefr_current}",
+  "level_to": "{cefr_target}",
   "topics_by_week": [
     {{"week": 1, "topics": ["Greetings & Introductions", "Alphabet & Pronunciation"]}},
     {{"week": 2, "topics": ["Numbers 1-100", "Telling Time", "Days & Months"]}},
@@ -107,7 +113,7 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
 
         except Exception as e:
             logger.warning(f"LLM did not return valid JSON: {e}. Using fallback.")
-            return self._get_fallback_curriculum("English")
+            return self._get_fallback_curriculum(language=lang, level_from=cefr_current, level_to=cefr_target)
 
     def _find_next_week(self, curriculum: Dict) -> Dict:
         """Determines which week is next"""
@@ -147,15 +153,17 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             return {"error": "Student not found", "student_id": student_id}
 
         # 2. Checking if there is already a plan
-        existing = self.db.get_curriculum(student_id)
+        target_lang = profile.get("target_language", "English")
+        existing = self.db.get_curriculum(student_id, language=target_lang)
 
         if existing and not force_regenerate:
             curriculum = existing
-            logger.info(f"The existing plan is used for {student_id}")
+            logger.info(f"The existing plan is used for {student_id} ({target_lang})")
         else:
-            logger.info(f"A new curriculum is being generated for {student_id}")
-            curriculum = self._generate_curriculum_with_llm(profile, total_weeks= {total_weeks})
+            logger.info(f"A new curriculum is being generated for {student_id} ({target_lang})")
+            curriculum = self._generate_curriculum_with_llm(profile, total_weeks=total_weeks)
             curriculum["student_id"] = student_id
+            curriculum["language"] = target_lang # Ensure strict consistency
             curriculum["completed_weeks"] = 0
             curriculum["created_at"] = datetime.utcnow().isoformat()
 
@@ -176,7 +184,8 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             "level_from": curriculum.get("level_from", "A1"),
             "level_to": curriculum.get("level_to", "C1"),
             "message": f"Неделя {next_lesson['week']}: {', '.join(next_lesson['topics'])}",
-            "plan_is_new": not bool(existing) or force_regenerate
+            "plan_is_new": not bool(existing) or force_regenerate,
+            "topics_by_week": curriculum.get("topics_by_week", [])
         }
 
     # Alias
