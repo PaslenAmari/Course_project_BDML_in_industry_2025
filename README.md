@@ -17,18 +17,18 @@
 To create docker use the following command:
 
 
-**docker run -d --name kursach -p 27017:27017 mongo:6**
+:boom: **docker run -d --name kursach -p 27017:27017 mongo:6**
 
 
 To launch docker use the following command:
 
 
-**docker start kursach**
+:boom: **docker start kursach**
 
 From the python terminal launch the ui:
 
 
-**streamlit run src/ui/app.py**
+:boom: **streamlit run src/ui/app.py**
 
 
 ![Status](https://img.shields.io/badge/Project-Multi--Agent%20Language%20Tutor-blue)
