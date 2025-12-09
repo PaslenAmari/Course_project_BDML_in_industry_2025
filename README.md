@@ -49,6 +49,10 @@ The landing page:
 The learning plan
 ![Curr](https://github.com/user-attachments/assets/48c9f33c-ef45-41a3-b863-1926b88ea9a2)
 
+The theory:
+<img width="1254" height="587" alt="image" src="https://github.com/user-attachments/assets/e0f1b0ab-37f7-4b7b-a985-b9f8adbf761d" />
+
+
 The exercises:
 <img width="1294" height="522" alt="image" src="https://github.com/user-attachments/assets/9c219091-9f19-43fe-a18b-d8045585a1da" />
 
