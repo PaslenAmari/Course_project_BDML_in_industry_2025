@@ -1,3 +1,7 @@
+![Project](https://img.shields.io/badge/Project-Personalized%20Educational%20Assistant-4c9aff)
+![Type](https://img.shields.io/badge/Multi--Agent-Language%20Tutor-8a2be2)
+![Tech](https://img.shields.io/badge/AI-Agents-ff69b4)
+
 # Personalized Educational Assistant
 
 3rd semester course project Machine Learning for Industrial Data 
