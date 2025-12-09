@@ -6,12 +6,12 @@
 
 3rd semester course project Machine Learning for Industrial Data 
 
-**Students:**
-:construction_worker: * Siraeva Gulnara [PaslenAmari](https://github.com/PaslenAmari)
-:construction_worker:* Levon Abramian
-:construction_worker:* Gaibaliev Emil
-:construction_worker:* [Gleb Mikloshevich](https://github.com/GlebMikloshevich)
-
+:construction_worker: **Students:**
+* Siraeva Gulnara [PaslenAmari](https://github.com/PaslenAmari)
+* Levon Abramian
+* Gaibaliev Emil
+* [Gleb Mikloshevich](https://github.com/GlebMikloshevich)
+---
 :hammer: **Instructions:**
 
 To create docker use the following command:
