@@ -181,7 +181,29 @@ Return JSON:
                 "correct_answer": "A"
             }
 
-        prompt = f"""
+        if request_params.get('type') == 'theory':
+            prompt = f"""
+You are an expert language tutor.
+Generate a concise but comprehensive theoretical lesson based on the syllabus.
+Focus on explaining the grammar rules, vocabulary usage, or cultural context.
+
+Context:
+- Week: {target_week}
+- Topics: {', '.join(topics)}
+- Difficulty: {request_params.get('difficulty')}
+- Language: {curriculum.get('language', 'English')} (Teach in English about this language)
+
+Return JSON:
+{{
+  "type": "theory",
+  "topic": "Specific Topic Name",
+  "title": "Lesson Title",
+  "content": "Markdown formatted explanation. Include sections like ## Introduction, ## Rules, ## Examples.",
+  "key_points": ["Key takeaway 1", "Key takeaway 2"]
+}}
+"""
+        else:
+            prompt = f"""
 Create a practice question based on the syllabus.
 
 Context:

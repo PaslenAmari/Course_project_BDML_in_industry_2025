@@ -76,9 +76,20 @@ def set_background(image_path: str, overlay_opacity: float = 0.5):
     }}
     
     /* Ensure text inside inputs is black and no shadow */
-    input, textarea {{
+    /* Ensure text inside inputs is black and no shadow */
+    input, textarea, select {{
         color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        caret-color: #000000 !important;
         text-shadow: none !important;
+    }}
+    
+    /* Disabled inputs */
+    input:disabled {{
+        color: #333333 !important;
+        -webkit-text-fill-color: #333333 !important;
+        background-color: #e0e0e0 !important;
+        opacity: 1 !important;
     }}
     
     /* Placeholder text styling */
@@ -183,7 +194,7 @@ db = LanguageLearningDB(database_url="mongodb://localhost:27017")
 
 # --- RESET LOGIC FOR CODE UPDATES ---
 # Increment this version whenever you modify agent code to force a reload
-SYSTEM_VERSION = "1.8" 
+SYSTEM_VERSION = "1.10" 
 
 if "system_version" not in st.session_state or st.session_state.system_version != SYSTEM_VERSION:
     st.info("System updated. Reloading modules and agents...")
@@ -193,19 +204,22 @@ if "system_version" not in st.session_state or st.session_state.system_version !
     import src.agents.language_tools
     import src.agents.language_tutor_agent
     import src.database.mongodb_adapter
+    import src.agents.theory_agent
     
     importlib.reload(src.agents.language_tools)
     importlib.reload(src.agents.language_tutor_agent)
     importlib.reload(src.database.mongodb_adapter)
+    importlib.reload(src.agents.theory_agent)
     
     # Re-import classes from reloaded modules
     from src.agents.language_tutor_agent import LanguageTutorAgent
     from src.database.mongodb_adapter import LanguageLearningDB
+    from src.agents.theory_agent import TheoryAgent
     
     # Re-initialize global DB with fresh class
     db = LanguageLearningDB(database_url="mongodb://localhost:27017")
     
-    keys_to_reset = ["tutor", "planner", "unified_agent", "quiz_session"]
+    keys_to_reset = ["tutor", "planner", "unified_agent", "quiz_session", "theory_agent"]
     for k in keys_to_reset:
         if k in st.session_state:
             del st.session_state[k]
@@ -217,10 +231,15 @@ if "tutor" not in st.session_state:
     try:
         # Re-import locally to ensure we use the fresh class definition
         from src.agents.language_tutor_agent import LanguageTutorAgent
+        from src.agents.theory_agent import TheoryAgent
         
         st.session_state.tutor = LanguageTutorAgent()
         st.session_state.planner = CurriculumPlannerAgent(database_url="mongodb://localhost:27017")
         st.session_state.unified_agent = UnifiedTeacherAgent(database_url="mongodb://localhost:27017")
+        st.session_state.theory_agent = TheoryAgent()
+    except Exception as e:
+        st.error(f"Failed to initialize agents: {e}")
+        st.stop()
     except Exception as e:
         st.error(f"Failed to initialize agents: {e}")
         st.stop()
@@ -254,13 +273,21 @@ if student_name:
         bg_path = BACKGROUND_MAP.get(lang, DEFAULT_BG)
         set_background(bg_path, overlay_opacity=0.5)
         
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
+        
+        # Helper for display
+        CEFR_MAP = {1: "A1", 2: "A2", 3: "B1", 4: "B2", 5: "C1", 6: "C2"}
+        c_lvl = existing_student.get("current_level", 1)
+        t_lvl = existing_student.get("target_level", 6)
+        
         with col1:
-            st.metric("Current Level", existing_student.get("current_level", "N/A"))
+            st.metric("Current Level", CEFR_MAP.get(c_lvl, c_lvl))
         with col2:
-            st.metric("Target Language", lang)
+            st.metric("Target Level", CEFR_MAP.get(t_lvl, t_lvl))
         with col3:
-            st.metric("Learning Style", existing_student.get("learning_style", "N/A"))
+            st.metric("Language", lang)
+        with col4:
+            st.metric("Style", existing_student.get("learning_style", "N/A"))
         
         if existing_student.get("goals"):
             st.info(f"Goals: {existing_student.get('goals')}")
@@ -273,7 +300,19 @@ if student_name:
                 ["English", "Spanish", "French", "German", "Chinese", "Japanese"])
             current_level = st.selectbox("Current Proficiency Level", 
                 ["A1", "A2", "B1", "B2", "C1", "C2"])
-        
+            
+            # Logic to filter target levels (must be >= current level)
+            all_levels = ["A1", "A2", "B1", "B2", "C1", "C2"]
+            try:
+                curr_idx = all_levels.index(current_level)
+                possible_targets = all_levels[curr_idx:]
+                if not possible_targets: 
+                    possible_targets = [current_level]
+            except ValueError:
+                possible_targets = all_levels
+            
+            target_level_input = st.selectbox("Target Proficiency Level", possible_targets, index=len(possible_targets)-1)
+
         with col2:
             learning_style = st.text_input("Learning Style", 
                 placeholder="e.g., visual, conversational, grammar-focused")
@@ -284,11 +323,16 @@ if student_name:
         set_background(bg_path, overlay_opacity=0.5)
         
         if st.button("Create My Profile", key="create_student"):
+            # Helper to map level string to int (1-6)
+            def get_level_int(lvl_str):
+                 return int(ord(lvl_str[0]) - ord('A')) + 1
+
             new_student = {
                 "student_id": student_id,
                 "name": student_name,
                 "target_language": target_language,
-                "current_level": int(ord(current_level[0]) - ord('A')) + 1,
+                "current_level": get_level_int(current_level),
+                "target_level": get_level_int(target_level_input),
                 "learning_style": learning_style or "general",
                 "goals": goals or "General language learning"
             }
@@ -540,70 +584,44 @@ if st.session_state.current_student:
         
         st.info(f"🔒 **Current Locked Week:** {curr_week} | **Topics:** {', '.join(curr_topics)}")
         
-        tab_uni_1, tab_uni_2 = st.tabs(["Chat Evaluation", "Content Generation"])
-        
-        # --- SUB-TAB 1: CHAT EVALUATION ---
-        with tab_uni_1:
-            st.subheader("Evaluate Recent Chat Interaction")
-            st.caption("The agent will analyze your recent conversation history to provide detailed feedback and scoring.")
+        st.subheader("Generate Syllabus-Aligned Content")
+        st.caption("Content is automatically aligned to your current week's topics.")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            # Allow selection up to current week
+            week_options = [f"Week {i}" for i in range(1, curr_week + 1)]
+            selected_week_str = st.selectbox("Target Week", options=week_options, index=len(week_options)-1)
+            # Extract number from "Week X"
+            target_week = int(selected_week_str.split(" ")[1])
             
-            if st.button("Evaluate My Progress", key="btn_eval_chat"):
-                with st.spinner("Analyzing chat history..."):
-                    eval_result = st.session_state.unified_agent.evaluate_chat(student_id=student_id)
+        with c2:
+            content_type = st.selectbox("Content Type", ["theory", "multiple_choice", "fill_in_the_blank", "open_question"])
+            
+        if st.button("Generate Content", key="btn_gen_content"):
+            with st.spinner(f"Generating {content_type} for Week {target_week}..."):
                 
-                if "error" in eval_result:
-                    st.error(f"Evaluation failed: {eval_result['error']}")
+                if content_type == "theory":
+                     # Use the specialized TheoryAgent
+                     # Need to fetch topics first to pass them
+                    current_topics = []
+                    # Try to find topics for the selected week
+                    if st.session_state.curriculum and "topics_by_week" in st.session_state.curriculum:
+                        for w_data in st.session_state.curriculum["topics_by_week"]:
+                             if w_data["week"] == target_week:
+                                 current_topics = w_data["topics"]
+                                 break
+                    
+                    topic_str = ", ".join(current_topics) if current_topics else "General"
+                    
+                    gen_result = st.session_state.theory_agent.generate_theory(
+                        topic=topic_str,
+                        week=target_week,
+                        level=student_info.get("current_level", "A1"), # This might be int, let's format if needed in agent, but here pass as is or map strings
+                        language=student_info.get("target_language", "English")
+                    )
                 else:
-                    # Score
-                    score = eval_result.get("overall_score", 0)
-                    if score >= 80:
-                        st.success(f"Overall Score: {score}/100")
-                    elif score >= 50:
-                        st.warning(f"Overall Score: {score}/100")
-                    else:
-                        st.error(f"Overall Score: {score}/100")
-                    
-                    st.write(f"**Feedback:** {eval_result.get('detailed_feedback', '')}")
-                    
-                    # Errors
-                    errors = eval_result.get("all_errors", [])
-                    if errors:
-                        st.write("### Identified Errors")
-                        for i, err in enumerate(errors):
-                            with st.expander(f"Error {i+1}: {err.get('error_description', 'Unknown error')}"):
-                                st.write(f"**Student Answer:** {err.get('student_answer', 'N/A')}")
-                                st.write(f"**Correction:** {err.get('correction', 'N/A')}")
-                                st.write(f"**Rule:** {err.get('rule_explanation', 'N/A')}")
-                    else:
-                        st.info("No major errors detected in recent history!")
-                        
-                    # Improvement Plan
-                    st.write("### Improvement Plan")
-                    st.info(eval_result.get("improvement_plan", "Keep practicing!"))
-                    
-                    # Follow-up
-                    q_list = eval_result.get("follow_up_questions", [])
-                    if q_list:
-                        st.write("**Suggested Follow-up Questions:**")
-                        for q in q_list:
-                            st.markdown(f"- {q}")
-
-        # --- SUB-TAB 2: CONTENT GENERATION ---
-        with tab_uni_2:
-            st.subheader("Generate Syllabus-Aligned Content")
-            st.caption("Content is automatically aligned to your current week's topics.")
-
-            c1, c2 = st.columns(2)
-            with c1:
-                # Locked to current week
-                st.text_input("Target Week", value=f"Week {curr_week}", disabled=True)
-                target_week = curr_week
-            with c2:
-                content_type = st.selectbox("Content Type", ["multiple_choice", "fill_in_the_blank", "open_question"])
-                
-            if st.button("Generate Content", key="btn_gen_content"):
-                with st.spinner(f"Generating {content_type} for Week {target_week}..."):
-                    
+                    # Use the standard UnifiedAgent for exercises
                     params = {
                         "week": target_week,
                         "type": content_type,
@@ -614,11 +632,21 @@ if st.session_state.current_student:
                         student_id=student_id,
                         request_params=params
                     )
+            
+            if "error" in gen_result:
+                st.error(f"Generation failed: {gen_result['error']}")
+            else:
+                st.markdown("---")
                 
-                if "error" in gen_result:
-                    st.error(f"Generation failed: {gen_result['error']}")
+                if gen_result.get("type") == "theory":
+                     st.subheader(f"📚 {gen_result.get('title', 'Theory Lesson')}")
+                     st.caption(f"Topic: {gen_result.get('topic', 'General')}")
+                     
+                     st.markdown(gen_result.get("content", ""))
+                     
+                     if gen_result.get("key_points"):
+                         st.info("**Key Takeaways:**\n" + "\n".join([f"- {p}" for p in gen_result["key_points"]]))
                 else:
-                    st.markdown("---")
                     st.subheader(f"Week {target_week} Exercise")
                     st.write(f"**Topic:** {gen_result.get('topic', 'General')}")
                     st.write(f"**Question:** {gen_result.get('question', '')}")
@@ -728,7 +756,7 @@ if st.session_state.current_student:
             with c1:
                 st.metric("Question", f"{idx + 1} / {total}")
             with c3:
-                st.metric("Score", f"{qs['score']} / {idx}") # Score so far
+                st.metric("Score", f"{qs['score']}") # Score so far
             
             # Progress bar
             st.progress((idx) / total)

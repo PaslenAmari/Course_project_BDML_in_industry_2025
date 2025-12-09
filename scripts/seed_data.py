@@ -19,7 +19,9 @@ def seed():
             "student_id": f"student_{i:03d}",
             "name": f"Student {i}",
             "current_level": (i % 3) + 1, # Levels 1, 2, 3
-            "target_language": "English"
+            "target_level": 5, # Target C1
+            "target_language": "English", 
+            "goals": "Reach C1 proficiency and improve business communication."
         })
 
     for s in students:
