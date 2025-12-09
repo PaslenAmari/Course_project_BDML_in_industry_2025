@@ -26,6 +26,17 @@ From the python terminal launch the ui:
 
 **streamlit run src/ui/app.py**
 
+
+![Status](https://img.shields.io/badge/Project-Multi--Agent%20Language%20Tutor-blue)
+![Made with](https://img.shields.io/badge/AI-Agents-purple)
+
+## 🎯 Goal
+
+The goal of this **multi-agent language educational system** is to provide each learner with a **personalized**, **adaptive** language learning experience through the collaboration of specialized AI agents 🤖 that handle **profiling**, **content selection**, **difficulty adjustment**, and **feedback generation** in real time ⏱️.
+
+
+
+
 The landing page:
 
 ![Titul](https://github.com/user-attachments/assets/32eb2736-256b-4b05-ac53-f3ffbf633f30)
