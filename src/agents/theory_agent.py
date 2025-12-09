@@ -18,11 +18,7 @@ class TheoryAgent(BaseAgent):
         super().__init__()
         self.research_agent = None
         try:
-            # Lazy import to avoid circular dep issues if any, or just safe init
             from src.agents.research_agent import ResearchAgent
-            # Check if critical env vars are present to avoid crashing on init
-            # ResearchAgent needs CHROMA_PATH, LITELLM_API_KEY, YANDEX_API_KEY typically
-            # We will try to init it, if it fails, we just don't use it.
             self.research_agent = ResearchAgent()
             logger.info("ResearchAgent linked to TheoryAgent successfully.")
         except Exception as e:
@@ -99,13 +95,11 @@ Return strictly valid JSON in this format:
             response = self.llm.invoke(prompt).content
             clean_res = response.strip()
             
-            # Simple markdown cleanup
             if "```json" in clean_res:
                 clean_res = clean_res.split("```json")[1].split("```")[0].strip()
             elif "```" in clean_res:
                 clean_res = clean_res.split("```")[1].split("```")[0].strip()
             
-            # Find bounds
             start = clean_res.find("{")
             end = clean_res.rfind("}") + 1
             if start != -1 and end != 0:

@@ -16,7 +16,7 @@ def run_test():
     result = agent.teach(
         student_id="emil_english",
         topic="Present Simple Tense",
-        outline=None,  # можно передать свой список шагов, если нужно
+        outline=None,  # you can pass your own list of steps if needed
     )
 
     print("\nLesson result:")

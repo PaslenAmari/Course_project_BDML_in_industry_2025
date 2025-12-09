@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
 
 
-# тест подключения
+# connection test
 # print(">>> test_assessor.py START")
 
 # import sys

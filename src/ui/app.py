@@ -355,7 +355,7 @@ if st.session_state.current_student:
     student_info = st.session_state.current_student
     student_id = student_info["student_id"]
     
-    # СМЕНА ЯЗЫКА
+    # CHANGE LANGUAGE
     col1, col2 = st.columns([4, 1])
     with col1:
         st.caption(f"Student: {student_info.get('name')} | "
@@ -431,11 +431,11 @@ if st.session_state.current_student:
                 st.session_state.show_lang_picker = False
                 st.rerun()
     
-    # ТАБЫ
+    # TABS
     tab1, tab2, tab3, tab4 = st.tabs([
         "Learning Plan",
         "Progress",
-        "Unified Tutor",
+        "Tutor",
         "Exercises"
     ])
     
@@ -566,9 +566,9 @@ if st.session_state.current_student:
         st.divider()
         st.info("Complete the 'Weekly Exam' in the Exercises tab to advance to the next week!")
     
-    # TAB 3: UNIFIED TUTOR
+    # TAB 3: TUTOR
     with tab3:
-        st.header("Unified Teacher Agent")
+        st.header("Teacher Agent")
         
         # Determine Current Week
         curr_week = 1

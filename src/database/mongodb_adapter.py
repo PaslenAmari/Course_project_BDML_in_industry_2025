@@ -8,22 +8,22 @@ from pymongo.errors import DuplicateKeyError
 logger = logging.getLogger(__name__)
 
 class LanguageLearningDB:
-    """MongoDB adapter для системы изучения языков"""
+    """MongoDB adapter for language learning system"""
 
     def __init__(self, database_url: str = "mongodb://localhost:27017"):
         try:
             self.client = MongoClient(database_url, serverSelectionTimeoutMS=5000)
             self.db = self.client["language_learning"]
-            logger.info("MongoDB подключён успешно")
+            logger.info("MongoDB connected successfully")
         except Exception as e:
-            logger.error(f"Не удалось подключиться к MongoDB: {e}")
+            logger.error(f"Failed to connect to MongoDB: {e}")
 
     def get_student(self, student_id: str) -> Optional[Dict]:
-        """Получить профиль студента"""
+        """Get student profile"""
         try:
             return self.db.students.find_one({"_id": student_id})
         except Exception as e:
-            logger.error(f"Ошибка чтения студента {student_id}: {e}")
+            logger.error(f"Error reading student {student_id}: {e}")
             return None
 
     def create_student(self, student_data: Dict) -> bool:
@@ -158,9 +158,9 @@ class LanguageLearningDB:
                 {"$set": profile},
                 upsert=True
             )
-            logger.info(f"Студент {profile['_id']} создан/обновлён")
+            logger.info(f"Student {profile['_id']} created/updated")
         except Exception as e:
-            logger.error(f"Ошибка создания студента: {e}")
+            logger.error(f"Error creating student: {e}")
 
     def get_curriculum(self, student_id: str, language: Optional[str] = None) -> Optional[Dict]:
         try:
@@ -187,7 +187,7 @@ class LanguageLearningDB:
                 {"$set": curriculum},
                 upsert=True
             )
-            logger.info(f"Учебный план сохранён для {student_id} (Language: {language})")
+            logger.info(f"Curriculum saved for {student_id} (Language: {language})")
         except Exception as e:
             logger.error(f"Error saving curriculum for {student_id}: {e}")
             return False

@@ -7,7 +7,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# грузим .env не из текущей папки, а из src
+# load .env not from current directory, but from src
 SRC_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 ENV_PATH = os.path.join(SRC_DIR, ".env")
 load_dotenv(ENV_PATH) 

@@ -12,11 +12,11 @@ from src.agents.curriculum_planner_agent import CurriculumPlannerAgent
 from src.database.mongodb_adapter import LanguageLearningDB
 import time
 
-# Инициализируем
+# Initialize
 planner = CurriculumPlannerAgent(database_url="mongodb://localhost:27017")
 db = LanguageLearningDB()
 
-# Список учеников для добавления
+# List of students to add
 students_to_create = [
     {
         "student_id": "emil_english",
@@ -57,20 +57,20 @@ for student in students_to_create:
     sid = student["student_id"]
     print(f"Processing: {student['name']} ({student['target_language']})...")
 
-    # Создаём студента в базе (если ещё нет)
+    # Create student in database (if not exists)
     db.create_student(student.copy())
 
-    # Генерируем план (force_regenerate=True — всегда свежий)
+    # Generate plan (force_regenerate=True - always fresh)
     result = planner.plan_curriculum(sid, force_regenerate=True)
 
     print(f"   Done! Week {result['next_week']}: {', '.join(result['next_topics'])}")
-    time.sleep(0.5)  # чтобы не спамить
+    time.sleep(0.5)  # to avoid spamming
 
 print("\n" + "="*100)
-print("ВСЕ СТУДЕНТЫ И ИХ УЧЕБНЫЕ ПЛАНЫ")
+print("ALL STUDENTS AND THEIR CURRICULUMS")
 print("="*100)
 
-# Получаем всех студентов
+# Get all students
 all_students = list(db.db.students.find({}))
 all_curriculums = {c["student_id"]: c for c in db.db.curriculums.find({})}
 
@@ -90,7 +90,7 @@ for student in all_students:
         for w in topics[:24]:
             print(f"     Week {w['week']:2d} → {', '.join(w['topics'])}")
         # if len(topics) > 5:
-        #     print(f"     ... и ещё {len(topics)-5} недель до Week {topics[-1]['week']}")
+        #     print(f"     ... and {len(topics)-5} more weeks until Week {topics[-1]['week']}")
     else:
         print("   The plan has not yet been created.")
 

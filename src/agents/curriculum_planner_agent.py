@@ -183,7 +183,7 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             "completed_weeks": curriculum.get("completed_weeks", 0),
             "level_from": curriculum.get("level_from", "A1"),
             "level_to": curriculum.get("level_to", "C1"),
-            "message": f"Неделя {next_lesson['week']}: {', '.join(next_lesson['topics'])}",
+            "message": f"Week {next_lesson['week']}: {', '.join(next_lesson['topics'])}",
             "plan_is_new": not bool(existing) or force_regenerate,
             "topics_by_week": curriculum.get("topics_by_week", [])
         }
