@@ -40,3 +40,11 @@ The exercises:
 The exam test to level up:
 <img width="1885" height="752" alt="image" src="https://github.com/user-attachments/assets/1939accc-e606-427d-aff4-7e0e48985055" />
 
+
+The language choices:
+<img width="1310" height="366" alt="image" src="https://github.com/user-attachments/assets/115e5069-8153-4b05-b323-bb7892d85a55" />
+
+
+For example - Japaneese
+<img width="1288" height="611" alt="image" src="https://github.com/user-attachments/assets/3baf7aed-ff6b-4108-a726-cfa605929dcf" />
+
