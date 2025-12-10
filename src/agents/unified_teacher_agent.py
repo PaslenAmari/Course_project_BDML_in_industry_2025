@@ -1,9 +1,11 @@
+# unified_teacher_agent.py
 import logging
 import json
 from typing import List, Dict, Any, Optional
 
 from src.agents.base_agent import BaseAgent
 from src.database.mongodb_adapter import LanguageLearningDB
+from src.database.chroma_db import ChromaVectorDB
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class UnifiedTeacherAgent(BaseAgent):
     def __init__(self, database_url: str = "mongodb://localhost:27017"):
         super().__init__()
         self.db = LanguageLearningDB(database_url)
+        self.vector_db = ChromaVectorDB()
         logger.info("UnifiedTeacherAgent initialized")
 
     # =================================================================

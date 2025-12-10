@@ -1,9 +1,11 @@
+# theory_agent.py
 import logging
 import json
 import os
 from typing import Dict, Any, List
 
 from src.agents.base_agent import BaseAgent
+from src.database.chroma_db import ChromaVectorDB
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,7 @@ class TheoryAgent(BaseAgent):
 
     def __init__(self):
         super().__init__()
+        self.vector_db = ChromaVectorDB() 
         self.research_agent = None
         try:
             from src.agents.research_agent import ResearchAgent

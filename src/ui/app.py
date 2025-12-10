@@ -3,13 +3,17 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+
 import streamlit as st
 from src.agents.language_tutor_agent import LanguageTutorAgent
 from src.agents.curriculum_planner_agent import CurriculumPlannerAgent
 from src.agents.unified_teacher_agent import UnifiedTeacherAgent
 from src.database.mongodb_adapter import LanguageLearningDB
+from src.validators import StudentProfile, TheoryResponse
+from pydantic import ValidationError
 import base64
 import datetime
+
 
 
 BACKGROUND_MAP = {
@@ -21,13 +25,16 @@ BACKGROUND_MAP = {
     "Chinese": "background/Chinese.jpg"
 }
 
+
 DEFAULT_BG = "background/Learning_room.jpg"
+
 
 # # ============================================================================
 # # CURRICULUM PLANNER SECTION
 # # ============================================================================
 # # Allows students to generate a personalized 24-week learning curriculum
 # # based on their proficiency level, goals, and target language.
+
 
 def set_background(image_path: str, overlay_opacity: float = 0.5):
     img_path = Path(image_path)
@@ -182,19 +189,24 @@ def set_background(image_path: str, overlay_opacity: float = 0.5):
     st.markdown(css, unsafe_allow_html=True)
 
 
+
 # ============================================================================
 # INIT PAGE & AGENTS
 # ============================================================================
+
 
 st.set_page_config(page_title="Language Learning Platform", layout="wide")
 set_background(DEFAULT_BG)
 st.title("Language Learning Platform")
 
+
 db = LanguageLearningDB(database_url="mongodb://localhost:27017")
+
 
 # --- RESET LOGIC FOR CODE UPDATES ---
 # Increment this version whenever you modify agent code to force a reload
 SYSTEM_VERSION = "1.10" 
+
 
 if "system_version" not in st.session_state or st.session_state.system_version != SYSTEM_VERSION:
     st.info("System updated. Reloading modules and agents...")
@@ -227,6 +239,7 @@ if "system_version" not in st.session_state or st.session_state.system_version !
     st.session_state.system_version = SYSTEM_VERSION
     st.rerun()
 
+
 if "tutor" not in st.session_state:
     try:
         # Re-import locally to ensure we use the fresh class definition
@@ -244,6 +257,7 @@ if "tutor" not in st.session_state:
         st.error(f"Failed to initialize agents: {e}")
         st.stop()
 
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "current_student" not in st.session_state:
@@ -254,12 +268,15 @@ if "show_lang_picker" not in st.session_state:
     st.session_state.show_lang_picker = False
 
 
+
 # ============================================================================
 # STUDENT IDENTIFICATION
 # ============================================================================
 
+
 st.header("Student Information")
 student_name = st.text_input("Enter your name", placeholder="e.g., John Doe")
+
 
 if student_name:
     student_id = student_name.lower().replace(" ", "_")
@@ -313,6 +330,7 @@ if student_name:
             
             target_level_input = st.selectbox("Target Proficiency Level", possible_targets, index=len(possible_targets)-1)
 
+
         with col2:
             learning_style = st.text_input("Learning Style", 
                 placeholder="e.g., visual, conversational, grammar-focused")
@@ -327,29 +345,39 @@ if student_name:
             def get_level_int(lvl_str):
                  return int(ord(lvl_str[0]) - ord('A')) + 1
 
-            new_student = {
-                "student_id": student_id,
-                "name": student_name,
-                "target_language": target_language,
-                "current_level": get_level_int(current_level),
-                "target_level": get_level_int(target_level_input),
-                "learning_style": learning_style or "general",
-                "goals": goals or "General language learning"
-            }
-            
-            success = db.create_student(new_student)
-            if success:
-                st.success(f"Profile created successfully, {student_name}!")
-                st.session_state.current_student = new_student
-                st.rerun()
-            else:
-                st.error("Failed to create profile.")
+            try:
+                new_student = StudentProfile(
+                    student_id=student_id,
+                    name=student_name,
+                    target_language=target_language,
+                    current_level=get_level_int(current_level),
+                    target_level=get_level_int(target_level_input),
+                    learning_style=learning_style or "general",
+                    goals=goals or "General language learning"
+                )
+                
+                success = db.create_student(new_student.model_dump())
+                if success:
+                    st.success(f"Profile created successfully, {student_name}!")
+                    st.session_state.current_student = new_student.model_dump()
+                    st.rerun()
+                else:
+                    st.error("Failed to create profile.")
+                    
+            except ValidationError as e:
+                for error in e.errors():
+                    field_name = error['loc'][0]
+                    error_msg = error['msg']
+                    st.error(f"{field_name}: {error_msg}")
+
 
 st.divider()
+
 
 # ============================================================================
 # MAIN INTERFACE WITH TABS
 # ============================================================================
+
 
 if st.session_state.current_student:
     student_info = st.session_state.current_student
@@ -391,6 +419,7 @@ if st.session_state.current_student:
                 valid_targets = [new_start_level] # Fallback if C2 is selected
         except ValueError:
             valid_targets = all_levels
+
 
         with col3:
             new_target_level = st.selectbox("Target Level",
@@ -563,6 +592,7 @@ if st.session_state.current_student:
         st.progress(progress_val)
         st.caption(f"You have completed {current_week_display - 1} out of {total_weeks_display} weeks in {current_lang}.")
 
+
         st.divider()
         st.info("Complete the 'Weekly Exam' in the Exercises tab to advance to the next week!")
     
@@ -582,10 +612,11 @@ if st.session_state.current_student:
                         curr_topics = w["topics"]
                         break
         
-        st.info(f"🔒 **Current Locked Week:** {curr_week} | **Topics:** {', '.join(curr_topics)}")
+        st.info(f"Current Locked Week: {curr_week} | Topics: {', '.join(curr_topics)}")
         
         st.subheader("Generate Syllabus-Aligned Content")
         st.caption("Content is automatically aligned to your current week's topics.")
+
 
         c1, c2 = st.columns(2)
         with c1:
@@ -617,7 +648,7 @@ if st.session_state.current_student:
                     gen_result = st.session_state.theory_agent.generate_theory(
                         topic=topic_str,
                         week=target_week,
-                        level=student_info.get("current_level", "A1"), # This might be int, let's format if needed in agent, but here pass as is or map strings
+                        level=student_info.get("current_level", "A1"),
                         language=student_info.get("target_language", "English")
                     )
                 else:
@@ -639,13 +670,21 @@ if st.session_state.current_student:
                 st.markdown("---")
                 
                 if gen_result.get("type") == "theory":
-                     st.subheader(f"📚 {gen_result.get('title', 'Theory Lesson')}")
-                     st.caption(f"Topic: {gen_result.get('topic', 'General')}")
-                     
-                     st.markdown(gen_result.get("content", ""))
-                     
-                     if gen_result.get("key_points"):
-                         st.info("**Key Takeaways:**\n" + "\n".join([f"- {p}" for p in gen_result["key_points"]]))
+                    try:
+                        theory = TheoryResponse(**gen_result)
+                        st.subheader(f"{theory.title}")
+                        st.caption(f"Topic: {theory.topic}")
+                        st.markdown(theory.content)
+                        
+                        if theory.key_points:
+                            st.info("Key Takeaways:\n" + "\n".join([f"- {p}" for p in theory.key_points]))
+                            
+                    except ValidationError as e:
+                        st.error("Invalid theory data structure")
+                        for error in e.errors():
+                            field_name = error['loc'][0]
+                            error_msg = error['msg']
+                            st.write(f"Field {field_name}: {error_msg}")
                 else:
                     st.subheader(f"Week {target_week} Exercise")
                     st.write(f"**Topic:** {gen_result.get('topic', 'General')}")
@@ -659,6 +698,7 @@ if st.session_state.current_student:
                     with st.expander("Show Answer"):
                         st.success(f"Correct Answer: {gen_result.get('correct_answer', 'N/A')}")
                         st.info(f"Explanation: {gen_result.get('explanation', 'N/A')}")
+
 
     # TAB 4: EXERCISES
     with tab4:
@@ -675,11 +715,12 @@ if st.session_state.current_student:
                         curr_week_topics = w["topics"]
                         break
         
-        st.info(f"📅 **Current Week {curr_week_num}**: {', '.join(curr_week_topics)}")
+        st.info(f"Current Week {curr_week_num}: {', '.join(curr_week_topics)}")
         
         # Initialize quiz session state if not exists
         if "quiz_session" not in st.session_state:
             st.session_state.quiz_session = None
+
 
         # --- SESSION NOT STARTED ---
         if st.session_state.quiz_session is None:
@@ -741,8 +782,10 @@ if st.session_state.current_student:
                             }
                             st.rerun()
 
+
                     except Exception as e:
                         st.error(f"Error generating exercises: {e}")
+
 
         # --- SESSION ACTIVE ---
         elif st.session_state.quiz_session and not st.session_state.quiz_session["completed"]:
@@ -765,7 +808,7 @@ if st.session_state.current_student:
             
             # Display the core content (sentence/text) if available
             if current_q.get('content'):
-                st.info(current_q['content'], icon="📖")
+                st.info(current_q['content'])
             
             st.write(f"**Task:** {current_q.get('task', 'N/A')}")
             st.write(f"**Instructions:** {current_q.get('instructions', 'N/A')}")
@@ -851,6 +894,7 @@ if st.session_state.current_student:
                         "created_at": datetime.datetime.utcnow()
                     })
 
+
                     st.rerun()
             else:
                 # Show Result Feedback
@@ -858,9 +902,9 @@ if st.session_state.current_student:
                 explanation = current_q.get('explanation', '')
                 
                 if current_result == "correct":
-                    st.success("✅ Correct!")
+                    st.success("Correct!")
                 else:
-                    st.error("❌ Incorrect")
+                    st.error("Incorrect")
                     st.info(f"Correct Answer: {correct_val}")
                 
                 if explanation:
@@ -881,7 +925,7 @@ if st.session_state.current_student:
             percent = (score / total) * 100
             passed = percent >= 80
             
-            st.markdown(f"## Session Complete! 🏁")
+            st.markdown(f"## Session Complete!")
             
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -914,7 +958,7 @@ if st.session_state.current_student:
                        )
                        st.toast("Level Up! Next week unlocked.")
                        st.session_state.curriculum = None # Force refresh
-                       st.success(f"🎉 You have officially passed Week {curr_week_num}! Proceeding to Week {curr_week_num + 1}...")
+                       st.success(f"You have officially passed Week {curr_week_num}! Proceeding to Week {curr_week_num + 1}...")
             else:
                 st.error("You did not reach the 80% passing mark. Try again!")
                 st.write("Review your mistakes and start a new session.")
@@ -927,6 +971,7 @@ if st.session_state.current_student:
                 
                 st.session_state.quiz_session = None
                 st.rerun()
+
 
 else:
     st.info("Please enter your name and create your profile to start learning.")
