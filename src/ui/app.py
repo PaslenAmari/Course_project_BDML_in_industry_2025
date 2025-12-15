@@ -194,7 +194,7 @@ db = LanguageLearningDB(database_url="mongodb://localhost:27017")
 
 # --- RESET LOGIC FOR CODE UPDATES ---
 # Increment this version whenever you modify agent code to force a reload
-SYSTEM_VERSION = "1.10" 
+SYSTEM_VERSION = "1.11" 
 
 if "system_version" not in st.session_state or st.session_state.system_version != SYSTEM_VERSION:
     st.info("System updated. Reloading modules and agents...")
@@ -259,13 +259,35 @@ if "show_lang_picker" not in st.session_state:
 # ============================================================================
 
 st.header("Student Information")
-student_name = st.text_input("Enter your name", placeholder="e.g., John Doe")
 
-if student_name:
-    student_id = student_name.lower().replace(" ", "_")
+# Fetch existing students for dropdown
+all_students = db.get_all_students()
+# Create mapping: "Name (id)" -> id
+student_options_map = {f"{s.get('name', 'Unknown')} ({s['student_id']})": s['student_id'] for s in all_students}
+options_list = ["Create New / Manual Entry"] + list(student_options_map.keys())
+
+selected_option = st.selectbox("Select Student Profile", options_list)
+
+student_id = None
+student_name = None
+
+if selected_option == "Create New / Manual Entry":
+    student_name = st.text_input("Enter your name", placeholder="e.g., John Doe")
+    if student_name:
+        student_id = student_name.lower().replace(" ", "_")
+else:
+    student_id = student_options_map[selected_option]
+    # We will let the DB fetch fill in the name if needed, but for the UI welcome message we might need it.
+    # Actually the code below fetches existing_student, so we can get name from there.
+
+if student_id:
+    # student_id is already set above
+
     existing_student = db.get_student(student_id)
     
     if existing_student:
+        if not student_name:
+            student_name = existing_student.get("name", student_id)
         st.success(f"Welcome back, {student_name}!")
         st.session_state.current_student = existing_student
         
@@ -325,7 +347,8 @@ if student_name:
         if st.button("Create My Profile", key="create_student"):
             # Helper to map level string to int (1-6)
             def get_level_int(lvl_str):
-                 return int(ord(lvl_str[0]) - ord('A')) + 1
+                 LEVEL_MAP_SAVE = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+                 return LEVEL_MAP_SAVE.get(lvl_str, 1)
 
             new_student = {
                 "student_id": student_id,
@@ -596,10 +619,17 @@ if st.session_state.current_student:
             target_week = int(selected_week_str.split(" ")[1])
             
         with c2:
-            content_type = st.selectbox("Content Type", ["theory", "multiple_choice", "fill_in_the_blank", "open_question"])
+            CONTENT_TYPE_MAP = {
+                "Theory": "theory",
+                "Choice": "multiple_choice",
+                "Fill In The Blank": "fill_in_the_blank",
+                "Open Question": "open_question"
+            }
+            selected_type_label = st.selectbox("Content Type", list(CONTENT_TYPE_MAP.keys()), index=1)
+            content_type = CONTENT_TYPE_MAP[selected_type_label]
             
         if st.button("Generate Content", key="btn_gen_content"):
-            with st.spinner(f"Generating {content_type} for Week {target_week}..."):
+            with st.spinner(f"Generating {selected_type_label} for Week {target_week}..."):
                 
                 if content_type == "theory":
                      # Use the specialized TheoryAgent
@@ -767,7 +797,8 @@ if st.session_state.current_student:
             if current_q.get('content'):
                 st.info(current_q['content'], icon="📖")
             
-            st.write(f"**Task:** {current_q.get('task', 'N/A')}")
+            task_label = current_q.get('task', 'N/A').replace("Multiple choice", "Choice").replace("multiple choice", "Choice").replace("Multiple Choice", "Choice")
+            st.write(f"**Task:** {task_label}")
             st.write(f"**Instructions:** {current_q.get('instructions', 'N/A')}")
             
             # Input Area

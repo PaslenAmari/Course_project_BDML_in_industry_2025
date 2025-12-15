@@ -1,9 +1,27 @@
-# version: "3.9"
-
 services:
   mongo:
     image: mongo:6
-    container_name: kursach
+    container_name: kursach_mongo
     ports:
       - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
     restart: unless-stopped
+
+  app:
+    build: .
+    container_name: kursach_app
+    ports:
+      - "8501:8501" # Streamlit
+      - "8000:8000" # FastAPI
+    depends_on:
+      - mongo
+    environment:
+      - MONGODB_URL=mongodb://mongo:27017
+    volumes:
+      - .:/app # Hot reload for development
+    command: streamlit run src/ui/app.py --server.port=8501 --server.address=0.0.0.0
+
+volumes:
+  mongo_data:
+

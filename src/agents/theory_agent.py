@@ -77,7 +77,7 @@ Requirements:
 2. **Content**: 
    - Use Markdown formatting.
    - Explain the concept clearly (grammar, vocabulary, or culture).
-   - Provide examples in {language} with English translations.
+   - Provide examples in {language}. {'If ' + language + ' != "English", provide English translations.' if language != "English" else 'Do NOT provide translations if teaching English.'}
    - Keep it concise but comprehensive enough for {level} level.
    - If research material is provided, strictly use it to verify facts or provide examples, but structure it as a clean lesson.
 3. **Key Takeaways**: A list of 2-4 crucial points to remember.

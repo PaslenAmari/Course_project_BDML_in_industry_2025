@@ -251,3 +251,12 @@ class LanguageLearningDB:
         except Exception as e:
             logger.error(f"Error fetching random student: {e}")
             return None
+
+    def get_all_students(self) -> list[Dict]:
+        """Retrieve all student profiles to list in UI."""
+        try:
+            cursor = self.db.students.find({}, {"student_id": 1, "name": 1, "_id": 0})
+            return list(cursor)
+        except Exception as e:
+            logger.error(f"Error retrieving all students: {e}")
+            return []

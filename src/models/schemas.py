@@ -72,33 +72,74 @@ class StudentErrorSchema(BaseModel):
     occurred_at: Optional[datetime] = None
     times_repeated: int = 0
 
+class DialogueLine(BaseModel):
+    speaker: str
+    text: str
+    translation: str
+
+class DialogueSchema(BaseModel):
+    """Generated dialogue"""
+    dialogue_id: str
+    topic: str
+    situation: str
+    level: int
+    lines: List[DialogueLine]
+    key_phrases: List[str]
+    cultural_notes: Optional[str] = None
+
+
+
+class QuestionType(str, Enum):
+    MULTIPLE_CHOICE = "multiple_choice"
+    FILL_IN_THE_BLANK = "fill_in_the_blank"
+    OPEN_QUESTION = "open_question"
+    THEORY = "theory"
 
 class ExerciseSchema(BaseModel):
-    """Generated exercise description"""
-    exercise_id: str
-    task: str
-    instructions: str
-    type: ExerciseType
-    difficulty: int  # 1-5
-    example: Optional[str] = None
-    correct_answer: str
-    hints: List[str] = []
-
-
-class LanguageLessonRequest(BaseModel):
-    """Request body for /api/tutor/lesson"""
-    student_id: str
+    """Generated exercise details"""
+    exercise_id: Optional[str] = None
+    type: QuestionType
     topic: str
-    outline: Optional[List[str]] = None
-    include_review: bool = True
-    include_errors: bool = True
+    task: Optional[str] = None
+    question: str
+    options: Optional[List[str]] = None
+    correct_answer: Optional[str] = None
+    explanation: Optional[str] = None
+    difficulty: int = 1
 
+class TheorySchema(BaseModel):
+    """Generated theory lesson"""
+    type: Literal["theory"] = "theory"
+    topic: str
+    title: str
+    content: str
+    key_points: List[str] = []
 
-class LanguageLessonResponse(BaseModel):
-    """
-    High-level lesson response used by API.
-    This can wrap the raw dict returned by LanguageTutorAgent.
-    """
+class AlignmentResponse(BaseModel):
+    """Result of aligning content to curriculum"""
+    week: int
+    topic: str
+    confidence_score: float
+    reasoning: str
+
+class ErrorDetail(BaseModel):
+    """Detailed error analysis from chat"""
+    question_index: Optional[int] = None
+    student_answer: Optional[str] = None
+    error_description: str
+    correction: str
+    rule_explanation: Optional[str] = None
+
+class ChatEvaluationResponse(BaseModel):
+    """Full chat evaluation result"""
+    overall_score: int = Field(..., ge=0, le=100)
+    detailed_feedback: str
+    all_errors: List[ErrorDetail] = []
+    improvement_plan: str
+    follow_up_questions: List[str] = []
+
+class LessonPlanResponse(BaseModel):
+    """High-level lesson response"""
     lesson_id: str
     topic: str
     outline: List[str]
@@ -108,4 +149,5 @@ class LanguageLessonResponse(BaseModel):
     dialogue: Optional[Dict] = None
     selected_tools: List[str]
     review_materials: List[Dict] = []
-    lesson_metadata: Dict
+    lesson_metadata: Dict = {}
+
