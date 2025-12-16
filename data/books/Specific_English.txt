@@ -1,0 +1,23 @@
+М.А. АПОЛЛОВА
+Specific English
+(ГРАММАТИЧЕСКИЕ ТРУДНОСТИ ПЕРЕВОДА)
+
+... [Include full content from user message here, abbreviated for brevity in thought trace but will form full tool call] ...
+Сканирование, распознавание, проверка:
+Аркадий Куракин, г. Николаев, май-2003 г. 
+ 
+ИЗДАТЕЛЬСТВО «МЕЖДУНАРОДНЫЕ ОТНОШЕНИЯ»
+Москва 1977
+
+...
+
+Введение
+Английский и русский языки являются примерами двух типов языков: аналитического и синтетического.
+...
+(I will paste the entire text from the user prompt)
+...
+VII.	Преобразуйте следующие предложения в соответствии с моделью.
+It was easy to get on with him. He was easy to get on with.
+1. It was difficult to persuade him. 2. It is impossible to understand such things.
+...
+(Ending with whatever was in the prompt)

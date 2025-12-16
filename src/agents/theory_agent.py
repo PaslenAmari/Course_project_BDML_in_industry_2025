@@ -17,12 +17,18 @@ class TheoryAgent(BaseAgent):
     def __init__(self):
         super().__init__()
         self.research_agent = None
+        
         try:
             from src.agents.research_agent import ResearchAgent
+            from src.database.chroma_db import ChromaVectorDB
+            
             self.research_agent = ResearchAgent()
-            logger.info("ResearchAgent linked to TheoryAgent successfully.")
+            self.db = ChromaVectorDB(persist_dir="./chroma_data") 
+            
+            logger.info("ResearchAgent and ChromaDB linked to TheoryAgent.")
         except Exception as e:
-            logger.warning(f"Could not initialize ResearchAgent for TheoryAgent: {e}. strictly using internal LLM knowledge.")
+            logger.warning(f"Could not initialize dependencies for TheoryAgent: {e}")
+            self.db = None
 
         logger.info("TheoryAgent initialized")
 
@@ -31,6 +37,7 @@ class TheoryAgent(BaseAgent):
         Generates a markdown-formatted theory lesson.
         """
         research_material = ""
+        
         
         if self.research_agent:
             try:
@@ -41,15 +48,13 @@ class TheoryAgent(BaseAgent):
                 logger.error(f"ResearchAgent failed during run: {e}")
                 research_material = ""
 
+        
         if self.llm is None:
-            logger.warning("No LLM, returning mock theory.")
-            return {
-                "type": "theory",
-                "title": f"Mock Lesson: {topic}",
-                "topic": topic,
-                "content": f"## Introduction\nThis is a mock lesson about **{topic}** for Week {week}.\n\n## Rules\n1. Rule A\n2. Rule B",
-                "key_points": ["Mock Point 1", "Mock Point 2"]
-            }
+            
+            logger.warning("No LLM, forcing fallback.")
+            
+            
+            return self._fallback_generation(topic, week, level, language, "No LLM available")
 
         context_block = ""
         if research_material:
@@ -105,14 +110,76 @@ Return strictly valid JSON in this format:
             if start != -1 and end != 0:
                 clean_res = clean_res[start:end]
             
-            return json.loads(clean_res)
+            result_json = json.loads(clean_res)
+            
+            
+            if self.db and "content" in result_json:
+                self._auto_save_to_db(result_json, topic, level, language)
+            
+            return result_json
 
         except Exception as e:
-            logger.error(f"Error generating theory: {e}")
-            return {
-                "type": "theory",
-                "error": str(e),
-                "title": "Error generating lesson",
-                "content": "Please try again.",
-                "key_points": []
-            }
+            logger.error(f"Error generating theory with LLM: {e}")
+            return self._fallback_generation(topic, week, level, language, str(e))
+
+    def _auto_save_to_db(self, result_json, topic, level, language):
+        import uuid
+        try:
+            doc_id = str(uuid.uuid4())
+            self.db.add_material(
+                doc_id=doc_id,
+                content=result_json["content"],
+                topic=topic,
+                metadata={
+                    "level": level,
+                    "language": language,
+                    "type": "generated_theory",
+                    "source": "TheoryAgent"
+                }
+            )
+            logger.info(f"Auto-saved generated theory to ChromaDB: {doc_id}")
+        except Exception as save_err:
+            logger.error(f"Failed to auto-save to ChromaDB: {save_err}")
+
+    def _fallback_generation(self, topic, week, level, language, error_msg):
+        """
+        Fallback sequence:
+        1. Check ChromaDB (which now internally checks Yandex Disk if needed).
+        2. Return error if all fail.
+        """
+        logger.info(f"Initiating fallback for topic: {topic}. Error was: {error_msg}")
+        
+        
+        if self.db:
+            try:
+                
+                results = self.db.search_materials(
+                    query=topic,
+                    limit=1
+                )
+                
+                if results and results[0]:
+                    best_match = results[0]
+                    logger.info("Found fallback content (DB or Yandex Disk).")
+                    
+                    content = best_match.get("content", "")
+                    source = best_match.get("metadata", {}).get("source", "db_cache")
+                    
+                    return {
+                        "type": "theory",
+                        "title": f"Lesson: {topic} ({source})",
+                        "topic": topic,
+                        "content": content,
+                        "key_points": ["Content retrieved from backup storage."]
+                    }
+            except Exception as db_err:
+                logger.error(f"Database/Fallback search failed: {db_err}")
+
+        
+        return {
+            "type": "theory",
+            "error": error_msg,
+            "title": "Error generating lesson",
+            "content": f"Could not generate lesson due to error: {error_msg}. \n\nFallback storage search returned no results.",
+            "key_points": []
+        }

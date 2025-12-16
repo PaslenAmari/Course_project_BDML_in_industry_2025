@@ -4,7 +4,7 @@ from typing import Optional, List, Dict, Any, Union
 import sys
 from pathlib import Path
 
-# Add project root to path
+
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.agents.unified_teacher_agent import UnifiedTeacherAgent
@@ -22,15 +22,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Initialize Agents
+
 db_url = "mongodb://mongo:27017"
 unified_agent = UnifiedTeacherAgent(database_url=db_url)
 
-# Mock LLM for tools
+
 mock_llm = FakeListLLM(responses=["Mock response"])
 tools = LanguageTools(llm=mock_llm)
 
-# --- Request Models ---
+
 
 class GenerateContentRequest(BaseModel):
     student_id: Optional[str] = None
@@ -41,7 +41,7 @@ class GenerateContentRequest(BaseModel):
 class ChatEvaluationRequest(BaseModel):
     student_id: str
 
-# --- Endpoints ---
+
 
 @app.get("/")
 def read_root():

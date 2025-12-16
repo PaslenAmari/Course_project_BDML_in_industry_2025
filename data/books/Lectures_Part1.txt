@@ -1,0 +1,409 @@
+Lecture 1. The Object of Lexicology
+... [I am pasting the content of Lecture 1, 2, and 3 from the user message here]
+What’s in a name? that which we call a rose
+By any other name would smell as sweet…
+(W. Shakespeare. Romeo and Juliet)
+Что в имени твоём? То, что зовём мы розой, -
+И под другим названьем сохраняло б
+Свой сладкий запах!
+ (перевод Щепкиной-Куперник)
+
+1. What is lexicology?
+ These famous lines reflect one of the fundamental problems of linguistic
+research: what is in a name, in a word? Is there any direct connection between a word
+and the object it represents? Could a rose have been called by “any other name” as Juliet
+says?
+ These and similar questions are answered by lexicological research. Lexicology,
+a branch of linguistics, is the study of words.
+ “Lexicology (from Gr lexis ‘word’ and logos ‘learning’) is the part of linguistics
+dealing with the vocabulary of a language and the properties of words as the main units
+of language. The term vocabulary is used to denote the system formed by the sum total
+of all the words that the language possesses.
+ The term word denotes the basic unit of a given language resulting from the
+association of a particular meaning with a particular group of sounds capable of a
+particular grammatical employment. A word therefore is simultaneously a semantic,
+grammatical and phonological unit.”
+(I. Arnold, Lexicology, p.9)
+ We do not know much about the origin of language and, consequently, of the
+origin of words. We know almost nothing about the mechanism by which a speaker’s
+mental process is converted into sound groups called “words”, nor about the reverse
+process whereby a listener’s brain converts the acoustic phenomena into concepts and
+ideas, thus establishing a two-way process of communication.
+ We know very little about the nature of relations between the word and the
+referent (i.e. object, phenomenon, quality, action, etc. denoted by the word). If we
+assume that there is a direct relation between the word and the referent it gives rise to
+another question: how should we explain the fact that the same referent is designated by
+quite different sound groups in different languages.
+ We do know by now that there is nothing accidental about the vocabulary of
+the language (the total sum of its words); that each word is a small unit within a vast,
+efficient and perfectly balanced system.
+ What do we know about the nature of the word?
+ First, we know that the word is a unit of speech which serves the purposes of
+human communication. Thus, the word can be defined as a unit of communication.
+ Secondly, the word can be perceived as the total of the sounds which
+comprise it.
+ Third, the word, viewed structurally, possesses several characteristics.
+2. The structure of the word
+ The modern approach to word studies is based on distinguishing between the
+external and the internal structures of the word.
+ By external structure of the word we mean its morphological structure. For
+example, in the word post-impressionists the following morphemes can be distinguished:
+the prefixes post-, im-, the root press, the noun-forming suffixes -ion, -ist, and the
+grammatical suffix of plurality -s. All these morphemes constitute the external structure
+of the word post-impressionists.
+ The internal structure of the word, or its meaning, is commonly referred to as
+the word’s semantic structure. This is the word’s main aspect. Words can serve the
+purposes of human communication solely due to their meanings.
+ The area of lexicology specializing in the semantic studies of the word is called
+semantics.
+ Another structural aspect of the word is its unity. The word possesses both
+external (or formal) unity and semantic unity. Formal unity of the word is sometimes
+interpreted as indivisibility. The example of post-impressionists has already shown that the
+word is not indivisible. Yet, its component morphemes are permanently linked together
+in opposition to word-groups, both free and with fixed contexts, whose components
+possess a certain structural freedom, e.g. bright light, to take for granted.
+ The formal unity of the word can best be illustrated by comparing a word and a
+word-group comprising identical constituents. The difference between a blackbird and a
+black bird is explained by their relationship with the grammatical system of the language.
+The word blackbird, which is characterized by unity, possesses a single grammatical
+framing: blackbird/s. The first constituent black is not subject to any grammatical
+changes. In the word-group a black bird each constituent can acquire grammatical forms
+of its own: the blackest birds I’ve ever seen. Other words can be inserted between the
+components: a black night bird.
+ The same example may be used to illustrate what we mean by semantic unity.
+ In the word-group a black bird each of the meaningful words conveys a separate
+concept: bird – a kind of living creature; black – a color.
+ The word blackbird conveys only one concept: the type of bird. This is one of the
+main features of any word: it always conveys one concept, no matter how many
+component morphemes it may have in its external structure.
+ A further structural feature of the word is its susceptibility to grammatical
+employment. In speech most words can be used in different grammatical forms in which
+their interrelations are realized.
+ All that we have said about the word can be summed up as follows.
+ The word is a speech unit used for the purposes of human communication,
+materially representing a group of sounds, possessing a meaning, susceptible to
+grammatical employment and characterized by formal and semantic unity.
+3. The main problems of lexicology
+ Two of these have been already underlined. The problem of word-building is
+associated with prevailing morphological word-structures and with processes of making
+new words. Semantics is the study of meaning. Modern approaches to this problem are
+characterized by two different levels of study: syntagmatic and paradigmatic.
+ On the syntagmatic level, the semantic structure of the word is analyzed in its
+linear relationships with neighboring words in connected speech. In other words, the
+semantic characteristics of the word are observed, described and studied on the basis of
+its typical contexts.
+ On the paradigmatic level, the word is studied in its relationships with other
+words in the vocabulary system. So, a word may be studied in comparison with other
+words of similar meaning. E.g. work n – labour n. Work работа, труд; 1 the job that a
+person does especially in order to earn money. This word has many meanings (in Oxford
+Dictionary – 14), many synonyms and idioms [`idiemz]: creative work творческая
+деятельность; public work общественные работы; his life`s work дело его жизни;
+dirty work (difficult, unpleasant) 1 чёрная работа; 2 грязное дело, подлость. Nice work!
+Отлично! Здорово! Saying (поговорка): All work and no play makes Jack a dull boy
+(мешай дело с бездельем, проживёшь век с весельем) – it is not healthy to spend all
+your time working; you need to relax too.
+ Labour: “work” и “labour” не взаимозаменимы; labour – 1 work, especially
+physical work: manual labour, a labour camp – исправительно-трудовой лагерь; 2 people
+who work: a shortage of labour; cheap labour; skilled labour – квалифицированные рабочие,
+Labour Party; labour relations; a labour of Sisyphus; Sisyphean labour [,sisi‘fi:en] сизифов
+труд; тяжёлый и бесплодный труд – of a task impossible to complete. From the Greek
+myth in which Sisyphus was punished for the bad things he had done in his life with the
+never-ending task of rolling a large stone to the top of a hill, from which it always rolled
+down again.
+ Other words of similar meaning (e.g. to refuse v – to reject v), of opposite meaning
+(e.g. busy adj – idle adj; to accept v – to reject v), of different stylistic characteristics (e.g. man n
+– chap n – bloke n – guy n). Man – chap (coll.) – парень, малый; a good chap – славный
+малый; old chap – старина; chap – BrE, informal, becoming old-fashioned – used to
+talk about a man in a friendly way: He isn`t such a bad chap really. Bloke (coll.) тип, парень:
+He seemed like a nice bloke. Guy – coll. US – малый; tough guy железный малый; wise
+guy умник; guys (informal, especially US) a group of people of either sex: Come on, you guys!
+ Consequently, the main problems of paradigmatic studies are synonymy,
+antonymy, functional styles.
+4. Phraseology
+ Phraseology is the branch of lexicology specializing in word-groups which are
+characterized by stability of structure and transferred meaning, e.g. to take the bull by the
+horns, to see red, birds of a feather, etc.
+5. Vocabulary as a system
+ One further important objective of lexicological studies is the study of the
+vocabulary of a language as a system. The vocabulary can be studied
+synchronically, that is, at a given stage of its development, or diachronically, that is, in
+the context of the processes through which it grew, developed and acquired its modern
+form.
+Lecture 2 Informal Style
+1. Functional style
+ The social context in which the communication is taking place determines the
+modes of speech. When placed in different situations, people instinctively choose
+different kinds of words and structures to express their thoughts. The suitability or
+unsuitability of a word for each particular situation depends on its stylistic characteristics
+or, in other words, on the functional style it represents. Professor I.V. Arnold defines it
+as “a system of expressive means peculiar to a specific sphere of communication”.
+ By the sphere of communication we mean the circumstances attending the
+process of speech in each particular case: professional communication, a lecture, an
+informal talk, a formal letter, an intimate letter, a speech in court, etc.
+ All these circumstances or situations can be classified into two types: formal (a
+lecture, a speech in court, an official letter, professional communication) and informal
+(an informal talk, an intimate letter).
+ Accordingly, functional styles are classified into two groups, with further
+subdivisions depending on different situations.
+2. Informal style
+ Informal vocabulary is used in one’s immediate circle: family, relatives, or friends.
+One uses informal words when at home or feeling at home.
+ Informal style is relaxed, free-and-easy and familiar. But it should be pointed out
+that the informal talk of well-educated people considerably differs from that of the
+illiterate or the semi-educated; the choice of words with adults is different from the
+vocabulary of teenagers; people living in the provinces use certain regional words and
+expressions. Consequently, the choice of words is determined in each particular case not
+only by an informal (or formal) situation, but also by the speaker’s educational and
+cultural background, age group, and his occupational and regional characteristics.
+ Informal words and word-groups are divided into three types: colloquial, slang
+and dialect words and word-groups.
+3. Colloquial words
+ Among other informal words, colloquialisms are used by everybody, and their
+sphere of communication is comparatively wide, at least of literary colloquial words.
+These are informal words that are used in everyday conversational speech both by
+cultivated and uneducated people of all age groups. The sphere of communication of
+literary colloquial words also include the printed page.
+ Vast use of informal words is one of the prominent features of 20th century
+English and American literature. It is quite natural that informal words appear in
+dialogues in which they realistically reflect the speech of modern people.
+ However, in modern fiction informal words are not restricted to conversation in
+their use, but frequently appear in descriptive passages as well. In this way the narrative
+is endowed with conversational features. The author creates an intimate, warm, informal
+atmosphere.
+“Fred Hardy was a bad lot (пользовался дурной славой). Pretty women and an unlucky
+knack for backing the wrong horse had landed him in the bankruptcy court by the time he
+was twenty-five…” (From W.S. Maugham).
+ Here are some more examples of literary colloquial words. Pal (кореш, друг) and
+chum (приятель, дружок) are colloquial equivalents of friend; girl, when used colloquially,
+denotes a woman of any age; bite and snack (quick meal – перекусить) stand for meal; hi, hello
+are informal greetings, and so long a form of parting; start, go on, finish and be through
+(покончить) are also literary colloquialisms.
+ A considerable number of shortenings are found among words of this type. E.g.
+pram, exam, fridge, flu, zip, movie.
+ Verbs with post-positional adverbs are also numerous among colloquialisms: put
+up, put over, make up, make out, turn up, etc.
+ Literary colloquial words are to be distinguished from familiar colloquial and
+low colloquial.
+ The borderline between the literary and familiar colloquial is not always clearly
+marked. Yet the circle of speakers using familiar colloquial is more limited: these words
+are used mostly by the young and the semi-educated. This vocabulary group closely
+verges on slang and has something of its coarse flavour.
+ E.g. doc (for doctor), ta-ta (for good-bye), to kid smb.(for tease, banter – подшутить), to
+pick up smb. (for make a qick and easy acquaintance), shut up (for keep silent).
+ Low colloquial (просторечие) is defined as uses characteristic of the speech of
+persons who may be broadly described as uncultivated. This group is stocked with
+words of illiterate (неграмотный) English which do not present much interest for our
+purposes.
+ The problem of functional styles is not one of purely theoretical interest, but
+represents a particularly important aspect of the language-learning process. Students
+often misunderstand the term “colloquial” and use it for “conversational”. The
+marker “colloquial” is a sign of restricted usage – not in formal circumstances or in
+reports. But literary colloquial words should be included in functional vocabulary,
+presented and drilled in suitable contexts and situations, mainly in dialogues. It is
+important to associate these words with informal, relaxed situations.
+4. Slang
+ The Oxford English Dictionary defines slang as “language of a highly colloquial
+style, considered as below the level of standard educated speech, and consisting either of
+new words or of current words employed in some special sense.”
+ All or most slang words are current words whose meanings have been
+metaphorically shifted. Each slang metaphor is rooted in a joke, but not in a kind or
+amusing joke. This is the criterion for distinguishing slang from colloquialisms: most
+slang words are metaphors and jocular, often with a coarse, mocking, cynical colouring.
+ Then why do people use slang?
+ For a number of reasons. To be picturesque, arresting, striking and, above all,
+different from others. To demonstrate one’s spiritual independence and daring. To
+sound “modern” and “up-to-date”.
+ It doesn’t mean that all these aims are achieved by using slang. But these are the
+main reasons for using it.
+ The circle of users of slang is more narrow than that of colloquialisms. It is
+mainly used by the young and uneducated.
+5. Dialect words
+ Dialect is a variety of a language which prevails in a district, with local
+peculiarities of vocabulary, pronunciation and phrase. England is a small country, yet it
+has many dialects which have their own distinctive features (e.g. the Lancashire,
+Dorsetshire, Norfolk dialects).
+ So dialects are regional forms of English. Standard English is defined as the
+language as it is written and spoken by literate people in both formal and informal usage
+and that is universally current while incorporating regional differences.
+ Dialectal peculiarities, especially those of vocabulary, are constantly being
+incorporated into everyday colloquial speech or slang. From these levels they can be
+transferred into the common stock, i.e. words which are not stylistically marked and a
+few of them even into formal speech and into the literary language. Car, trolley, tram
+began as dialect words. Some examples of dialects: tha (thee) – the objective case of thou;
+brass – money; nivver – never; nowt – nothing.
+Colloquial words. Examples with translations
+some sort of вроде бы в
+put sb. through доставать, мучить
+keep up продолжать
+cope with справиться
+stuff дело
+chuck = give up бросить
+a bad lot (old-fashioned) – a dishonest person плохая репутация, дурная слава
+knack for backing = knack умение, сноровка; unlucky knack невезение;
+back the wrong horse (idiom) поставить не на ту лошадь (т.е. ошибиться, сделать
+плохой выбор, просчитаться)
+landed him in = to land sb in sth (informal) – to get sb into a difficult situation
+bankruptcy court суд по делам о несостоятельности
+to have a good time хорошо проводить время
+ups and downs (of fortune) взлёты и падения; превратности судьбы
+damn it чёрт возьми/подери
+old buffer (bloke, card, codger) (пренебрежительно) старый хрыч, старикашка peg
+out выдохнуться, выйти из игры
+by George! Чёрт возьми! Ей богу!
+to be through: She was through with him – она покончила с ним
+put up: 1 поднять – Put your hands up! 2 to show a particular level of skill: The team
+put up a great performance – played very well
+put over передавать
+Lecture 3. Formal Style
+1. Learned words
+ Formal style is restricted to formal situations. In general, formal words fall into
+two main groups: words associated with professional communication and a less
+exclusive group of so-called learned words.
+ These words are mainly associated with the printed page. It is in this vocabulary
+stratum that poetry and fiction find their main resources.
+ We find here numerous words that are used in scientific prose and can be
+identified by their dry, matter-of-fact flavour (e.g. comprise, experimental, heterogeneous,
+homogeneous, conclusive, divergent, etc).
+ To this group also belongs so-called ‘officialese’ (канцеляризмы). These are the
+words of the official, bureaucratic language. They should be avoided in speech and in
+print, e.g. assist (for help), endeavour (for try), proceed (for go), approximately (for about),
+sufficient (for enough), inquire (for ask).
+ Probably the most interesting subdivision of learned words is represented by the
+words found in descriptive passages of fiction. These words, which may be called
+‘literary’, also have a particular flavour of their own, usually described as ‘refined’. They
+are mostly polysyllabic words drawn from the Romance language and, though fully
+adapted to the English phonetic system, some of them continue to sound singularly
+foreign. Here are some examples: solitude=loneless, lonely place (уединение, одиночество),
+sentiment=feeling (чувство), fascination=strong attraction (очарование, обаяние), delusion
+(заблуждение), meditation (размышление), cordial=friendly (сердечный, радушный).
+ There is one further subdivision of learned words: modes of poetic diction.
+These stand close to the previous group many words from which, in fact, belong to both
+these categories. Yet, poetic words have a further characteristic – a lofty, sometimes
+archaic, colouring: “Alas! (увы) they had been friends in youth;
+But wispering tongues can poison truth
+And constancy (постоянство) lives in realms (царства) above;
+And life is thorny; and youth is vain…
+ Though learned words are mainly associated with the printed page, this is not
+exclusively so. Any educated English-speaking individual is sure to use many learned
+words not only in his formal letters and professional communication but also in his
+everyday speech. Educated people in both modern fiction and real life use learned words
+quite naturally and their speech is richer for it.
+ On the other hand, excessive use of learned words in conversational speech
+presents grave hazards. Utterances overloaded with such words have pretensions of
+‘refinement’ and ‘elegance’ but achieve the exact opposite verging on the absurd and
+ridiculous.
+ Writers use this phenomenon for stylistic purposes. When a character in a book
+or in a play uses too many learned words, the obvious inappropriateness of his speech in
+an informal situation produces a comic effect.
+ However any suggestion that learned words are suitable only for comic purposes,
+would be quite wrong. It is in this vocabulary stratum that writers and poets find their
+most vivid paints and colours, and not only their humorous effects. Without knowing
+some learned words, it is even impossible to read fiction (not to mention scientific
+articles) or to listen to lectures in the foreign language.
+ It is also true that some of these words should be carefully selected and
+“activized” to become part of the students’ functional vocabulary.
+2. Archaic and obsolete words
+ Archaic – are old and no longer used words; obsolete – no longer used because
+something new was invented. Obsolete words have completely gone out of use.
+ Archaic and obsolete words stand close to the “learned” words, particularly to
+the modes of poetic diction. Learned words and archaisms are both associated with the
+printed page. Yet, many learned words may also be used in conversational situations.
+This cannot happen with archaisms, which are restricted to the printed page. These
+words are moribund, already partly or fully out of circulation. Their last refuge is in
+historical novels and in poetry which is rather conservative in its choice of words.
+ Thou [θаu] – (ты) and thy [ðai] – (твой), aye [ai] – (‘yes’) and nay [nei] – (‘no’) are
+certainly archaic and long since rejected by common usage, yet poets use them even
+today.
+ Numerous archaisms can be found in Shakespeare, but it should be taken in
+consideration that what appear to us today as archaisms in the works of Shakespeare, are
+in fact examples of everyday language of Shakespeare`s time.
+ Further examples of archaisms are: morn (for morning), eve (for evening), errant (for
+wandering, e.g. errant knights), etc.
+ Sometimes an archaic word may undergo a sudden revival. So, the formerly
+archaic kin (for relatives; one`s family) is now current in American usage.
+3. Professional terminology
+ Hundreds of thousands of words belong to special scientific, professional or
+trade terminological systems and are not used or even understood by people outside the
+particular speciality. Every field of modern activity has its specialized vocabulary, and
+similarly special terminologies for psychology, music, management, finance, economics,
+jurisprudence, linguistics and many others.
+ Term, as traditionally understood, is a word or a word-group which is
+specifically employed by a particular branch of science, technology, trade or the
+arts to convey a concept peculiar to his particular activity.
+ So, share, bank, balance sheet are finance terms; court, lawyer, civil law are legal terms;
+and top manager, creative team, motivation are used in management.
+ There are several controversial problems in the field of terminology. The first is
+the question whether a term loses its terminological status when it comes into common
+usage. Today this is a frequent occurrence, as various elements of the media of
+communication (TV, radio, magazines, etc.) ply people with scraps of knowledge from
+different scientific fields, technology and the arts. It is quite natural that under
+circumstances numerous terms pass into general usage without losing connection with
+their specific fields.
+ There are linguists in whose opinion terms are only those words which have
+retained their exclusiveness and are not known or recognized outside their specific
+sphere. From this point of view, words associated with the medical sphere, such as unit
+(доза лекарственного препарата), theatre (операционная), contact (носитель инфекции) are no
+longer medical terms as they are in more or less common usage.
+ There is yet another point of view, according to which any terminological system
+is supposed to include all the words and word-groups conveying concept peculiar to a
+particular branch of knowledge, regardless of their exclusiveness. Modern research of
+various terminological systems has shown that there is no impenetrable wall between
+terminology and the general language system. To the contrary, terminologies seem to
+obey the same rules as other vocabulary strata. Therefore, exchange between
+terminological systems and the “common” vocabulary is quite normal, and it would be
+wrong to regard a term as something “special” and standing apart.
+ Two other controversial problems deal with polysemy and synonymy.
+According to some linguists, an “ideal” term should be monosemantic (i.e. it should
+have only one meaning). Polysemantic terms may lead to misunderstanding, and that is
+a serious shortcoming in professional communication. This requirement seems quite
+reasonable, yet facts of the language do not meet it. There are numerous polysemantic
+terms. In the terminology of painting, the term colour may denote hue (цвет) and, at the
+same time, stuff used for colouring (краска).
+ The same is true about synonymy in terminological systems. There are scholars
+who insist that terms should not have synonyms because, consequently, scientists and
+other specialists would name the same objects and phenomena in their field by different
+terms and would not be able to come to any agreement. This may be true. But, in fact,
+terms do possess synonyms.
+4. Basic vocabulary
+ These words are stylistically neutral, and, in this respect, opposed to formal and
+informal words. Their stylistic neutrality makes it possible to use them in all kinds of
+situations, both formal and informal, in verbal and written communication. Certain of
+the stylistically marked vocabulary strata are exclusive: professional terminology is used
+mostly by representatives of the professions; dialects are regional; slang is favoured
+mostly by the young and the uneducated. Not so basic vocabulary. These words are used
+every day, everywhere and by everybody, regardless of profession, occupation,
+educational level, age group or geographical location. These are words without which no
+human communication would be possible as they denote objects and phenomena of
+everyday importance (e.g. house, bread, summer, child, mother, difficult, to go, etc.).
+ The basic vocabulary is the central group of the vocabulary, its historical
+foundation and living core. That is why words of this stratum show a considerably
+greater stability in comparison with words of the other strata, especially informal.
+ Basic vocabulary words can be recognized not only by their stylistic neutrality
+but, also, by lack of other connotations (i.e. attendant meanings). Their meanings are
+broad, general and directly convey the concept, without supplying any additional
+information.
+ For instance, the verb to walk means merely ‘to move from place to place on foot’
+whereas in the meanings of its synonyms to stride (шагать), to stroll (прогуливаться), to trot
+(семенить, бежать вприпрыжку), to stagger – to sway while walking (идти шатаясь) and others,
+some additional information is encoded as they each describe a different manner of
+walking, a different gait, tempo, purpose or lack of purpose. Thus, to walk, with its direct
+broad meaning, is a typical basic vocabulary word, and its synonyms, with their
+additional information encoded in their meanings, belong to the periphery of the
+vocabulary.
+ The basic vocabulary and the stylistically marked strata of the vocabulary do not
+exist independently but are closely interrelated. Most stylistically marked words have
+their neutral counterparts in the basic vocabulary.
+ The table gives some examples of such synonyms belonging to different stylistic
+strata.
+ Basic vocabulary Informal Formal
+ begin start, get started commence
+ continue go on, get on proceed
+ end finish, be through, be over terminate
+ child, baby kid, brat, bearn (dial.) infant, babe (poet.)
+ The basic vocabulary words comprise the first and essential part of the students’
+functional and recognition vocabulary. They constitute the beginner’s vocabulary. Yet, to
+restrict to the basic vocabulary would mean to deprive the speech of colour, expressive
+force and emotive shades, for, if basic words are absolutely necessary, they also
+decidedly lack something: they are not at all the kind of words to tempt a writer or a
+poet. Actually, if the language had none other but basic vocabulary words, fiction would
+be hardly readable, and poetry simply non-existent.

@@ -3,7 +3,7 @@ import json
 import logging
 from pathlib import Path
 
-# Setup path
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -16,7 +16,7 @@ def main():
     
     print("--- 1. Testing Exercise Alignment (Random Student) ---")
     ex = {"task": "Say hello", "difficulty": "A1"}
-    # Pass None to trigger random student selection
+    
     print(agent.align_exercise(None, ex))
 
     print("\n--- 2. Testing Chat Evaluation (Random Student) ---")

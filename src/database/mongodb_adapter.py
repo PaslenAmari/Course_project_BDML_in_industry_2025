@@ -1,4 +1,4 @@
-# src/database/mongodb_adapter.py
+
 import logging
 from typing import Optional, Dict
 from datetime import datetime
@@ -30,14 +30,14 @@ class LanguageLearningDB:
         """Create a new student profile."""
         try:
             student_data["created_at"] = datetime.utcnow()
-            # Ensure unique ID if not provided, or rely on caller
+            
             if "student_id" not in student_data:
-                # Simple generation or let mongo handle _id, but we use student_id as key often
-                # For now assume caller provides it as per seed script
+                
+                
                  pass
             
-            # Use student_id as _id or index? 
-            # get_student uses _id: student_id. So we should probably set _id to student_id
+            
+            
             if "student_id" in student_data:
                 student_data["_id"] = student_data["student_id"]
             

@@ -22,9 +22,8 @@ The system is orchestrated by a set of specialized agents, each employing Chain-
 |-------|------|----------------------|
 | **UnifiedTeacherAgent** | **Orchestrator** | Coordinates content generation, aligns exercises to syllabus, and evaluates chat sessions. Uses `LanguageTools`. |
 | **CurriculumPlannerAgent** | **Planner** | Generates 24-week personalized learning paths based on CEFR levels and goals. Stores plans in MongoDB. |
-| **LanguageTutorAgent** | **Tutor** | Conducts interactive practice (dialogue, vocab, grammar). Dynamically selects tools based on student error patterns. |
-| **AssessorAgent** | **Critic** | detailed analysis of student errors. Provides "Improvement Plans". |
-| **TheoryAgent** | **Teacher** | Generates Markdown-formatted theoretical lessons with examples and key takeaways. |
+| **LanguageTutorAgent** | **Tutor** | Conducts interactive practice (dialogue, vocab, grammar) and evaluates performance. Dynamically selects tools. |
+| **TheoryAgent** | **Teacher** | Generates Markdown-formatted theoretical lessons. Uses RAG (ChromaDB) and Yandex Disk Fallback. |
 
 ### Architecture Diagram
 ```mermaid
@@ -39,14 +38,19 @@ graph TD
         Unified --> Theory[TheoryAgent]
         
         Tutor --> Tools[LanguageTools]
-        Tools --> VS[Vocab Search]
         Tools --> GE[Generate Exercise]
         Tools --> DG[Dialogue Gen]
+        
+        Theory --> RAG[Research Agent]
     end
     
     subgraph "Memory & Storage"
         Unified <--> DB[(MongoDB)]
         Planner <--> DB
+        
+        RAG <--> Chroma[(ChromaDB)]
+        Theory -. Fallback .-> YD[Yandex Disk]
+        
         DB -- Stores --> Profiles[Student Profiles]
         DB -- Stores --> History[Chat History]
         DB -- Stores --> Syllabus[Curriculums]

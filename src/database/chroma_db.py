@@ -49,6 +49,22 @@ class ChromaVectorDB:
                 name="lesson_history",
                 metadata={"hnsw:space": "cosine"},
             )
+            self.textbooks = self.client.get_or_create_collection(
+                name="textbooks",
+                metadata={"hnsw:space": "cosine"},
+            )
+            
+            
+            try:
+                from src.utils.yandex_disk import YandexDiskClient
+                self.disk_client = YandexDiskClient()
+                logger.info("YandexDiskClient attached to ChromaVectorDB")
+            except ImportError:
+                logger.warning("Could not import YandexDiskClient")
+                self.disk_client = None
+            except Exception as e:
+                logger.warning(f"Failed to init YandexDiskClient: {e}")
+                self.disk_client = None
 
             logger.info(f"Chroma initialized with persistence at {persist_dir}")
 
@@ -93,6 +109,23 @@ class ChromaVectorDB:
 
             if not results["documents"] or not results["documents"][0]:
                 logger.debug(f"No materials found for query: {query}")
+                
+                
+                if hasattr(self, 'disk_client') and self.disk_client:
+                    try:
+                        logger.info(f"Vector search empty. Checking Yandex Disk for: {query}")
+                        disk_content = self.disk_client.find_theory_file(query)
+                        if disk_content:
+                            logger.info("Found content on Yandex Disk.")
+                            
+                            return [{
+                                "id": "yandex_fallback",
+                                "content": disk_content,
+                                "metadata": {"source": "yandex_disk", "topic": query}
+                            }]
+                    except Exception as disk_err:
+                        logger.error(f"Yandex Disk fallback failed: {disk_err}")
+                
                 return []
 
             materials_list = []

@@ -3,6 +3,7 @@ import json
 from typing import List, Dict, Any, Optional, Union
 
 from src.agents.base_agent import BaseAgent
+from src.agents.theory_agent import TheoryAgent
 from src.database.mongodb_adapter import LanguageLearningDB
 from src.models.schemas import (
     AlignmentResponse, 
@@ -24,11 +25,18 @@ class UnifiedTeacherAgent(BaseAgent):
     def __init__(self, database_url: str = "mongodb://localhost:27017"):
         super().__init__()
         self.db = LanguageLearningDB(database_url)
+        try:
+             self.theory_agent = TheoryAgent()
+             logger.info("TheoryAgent initialized within UnifiedTeacherAgent")
+        except Exception as e:
+             logger.error(f"Failed to initialize TheoryAgent: {e}")
+             self.theory_agent = None
+
         logger.info("UnifiedTeacherAgent initialized")
 
-    # =================================================================
-    # 1. Exercise Alignment
-    # =================================================================
+    
+    
+    
     def align_exercise(self, student_id: Optional[str], exercise: Dict[str, Any]) -> Union[AlignmentResponse, Dict]:
         """
         Analyzes the exercise and the student's syllabus to find the best match.
@@ -73,9 +81,9 @@ Return JSON matching this schema:
 """
         return self._invoke_and_parse(prompt, model_class=AlignmentResponse)
 
-    # =================================================================
-    # 2. Chat Evaluation
-    # =================================================================
+    
+    
+    
     def evaluate_chat(self, student_id: Optional[str] = None) -> Union[ChatEvaluationResponse, Dict]:
         """
         Evaluates Q&A pairs from a chat session.
@@ -93,7 +101,7 @@ Return JSON matching this schema:
 
         if self.llm is None:
             logger.warning("No LLM, returning mock evaluation.")
-            # Return mock data validating against schema
+            
             try:
                 return ChatEvaluationResponse(
                     overall_score=85,
@@ -131,7 +139,7 @@ Return JSON matching schema:
 """
         result = self._invoke_and_parse(prompt, model_class=ChatEvaluationResponse)
         
-        # Save to DB if valid
+        
         if isinstance(result, dict) and "overall_score" in result:
              eval_data = result.copy()
              eval_data["student_id"] = student_id
@@ -139,9 +147,9 @@ Return JSON matching schema:
              
         return result
 
-    # =================================================================
-    # 3. Content Generation
-    # =================================================================
+    
+    
+    
     def generate_content(self, student_id: Optional[str], request_params: Dict[str, Any]) -> Union[ExerciseSchema, TheorySchema, Dict]:
         """
         Generates a question/exercise or theory lesson.
@@ -165,25 +173,22 @@ Return JSON matching schema:
         topics = week_data.get("topics", [])
         student_profile = self.db.get_student(student_id)
         target_lang = student_profile.get("target_language", "English") if student_profile else "English"
+        current_level = student_profile.get("current_level", "A1") if student_profile else "A1"
 
         if self.llm is None:
             return {"error": "No LLM available"}
 
         if request_params.get('type') == 'theory':
-            prompt = f"""
-Generate theory lesson.
-Week: {target_week}, Topics: {topics}, Language: {target_lang}
-
-Return JSON (TheorySchema):
-{{
-  "type": "theory",
-  "topic": "string",
-  "title": "string",
-  "content": "markdown string",
-  "key_points": ["string"]
-}}
-"""
-            return self._invoke_and_parse(prompt, model_class=TheorySchema)
+            logger.info("Delegating theory generation to TheoryAgent")
+            
+            topic_str = ", ".join(topics) if isinstance(topics, list) else str(topics)
+            
+            return self.theory_agent.generate_theory(
+                topic=topic_str,
+                week=target_week,
+                level=str(current_level),
+                language=target_lang
+            )
         else:
             prompt = f"""
 Create practice exercise.
@@ -204,9 +209,9 @@ Return JSON (ExerciseSchema):
 """
             return self._invoke_and_parse(prompt, model_class=ExerciseSchema)
 
-    # =================================================================
-    # Helper
-    # =================================================================
+    
+    
+    
     def _invoke_and_parse(self, prompt: str, model_class=None) -> Any:
         try:
             response = self.llm.invoke(prompt).content
@@ -217,7 +222,7 @@ Return JSON (ExerciseSchema):
             elif "```" in clean_res:
                 clean_res = clean_res.split("```")[1].split("```")[0].strip()
             
-            # Heuristic for substring
+            
             start = clean_res.find("{")
             end = clean_res.rfind("}") + 1
             if start != -1 and end != 0:
@@ -225,9 +230,9 @@ Return JSON (ExerciseSchema):
             
             data = json.loads(clean_res)
             
-            # Validation
+            
             if model_class:
-                # Validate and return as dict (for compatibility) or object
+                
                 obj = model_class(**data)
                 return obj.model_dump()
             

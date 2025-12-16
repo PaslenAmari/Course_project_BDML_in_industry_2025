@@ -1,4 +1,4 @@
-# src/models/schemas.py
+
 """
 Pydantic schemas for language learning system.
 """
@@ -43,7 +43,7 @@ class StudentProfileSchema(BaseModel):
     email: Optional[str] = None
     native_language: str
     target_language: str
-    current_level: int = 1  # 1-5 (maps to A1-C2)
+    current_level: int = 1  
     learning_style: Literal["visual", "auditory", "kinesthetic"] = "visual"
     learning_pace: Literal["slow", "moderate", "fast"] = "moderate"
     interests: List[str] = []
