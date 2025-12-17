@@ -98,20 +98,3 @@ OPENAI_API_KEY=sk-...
 
 ---
 
-## 🔧 API Usage
-The internal **FastAPI** service exposes agent capabilities. You can interact with it directly via Swagger UI (`/docs`).
-
-**Example: Generate an Exercise**
-```json
-POST /generate/exercise
-{
-  "week": 1,
-  "type": "multiple_choice",
-  "difficulty": 2
-}
-```
-
-**Example: Dynamic Tool Selection**
-```http
-GET /tools/select?level=1&topic=Greetings
-```
