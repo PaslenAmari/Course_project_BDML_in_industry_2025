@@ -692,8 +692,14 @@ if st.session_state.current_student:
 
     
     with tab4:
-        st.header("Practice Exercises")
+        if "quiz_session" in st.session_state and st.session_state.quiz_session:
+            qs = st.session_state.quiz_session
+            header_text = "Weekly Exam" if qs["mode"] == "Weekly Exam (Level Up)" else "Practice Exercises"
+        else:
+            header_text = "Practice Exercises"
         
+        st.header(header_text)     
+                       
         
         curr_week_num = 1
         curr_week_topics = []
@@ -718,41 +724,50 @@ if st.session_state.current_student:
                 mode = st.radio("Mode", ["Practice", "Weekly Exam (Level Up)"], horizontal=True)
             with col2:
                 if mode == "Practice":
-                    exercise_type = st.selectbox("Exercise Type", ["vocabulary", "grammar", "dialogue"])
+                    exercisetype = st.selectbox("Exercise Type", ["vocabulary", "grammar", "dialogue"])
                 else:
                     st.warning("Pass this exam (80%+) to unlock the next week!")
-                    exercise_type = "grammar" 
+                    exercisetype = "grammar" 
             
             if st.button("Start Session (10 Questions)", key="start_session"):
                 with st.spinner("Generating 10 questions... This may take a moment."):
                     try:
                         import asyncio
                         
-                        topic_prompt = f"{student_info.get('target_language')} {exercise_type}"
+                        topic_prompt = f"{student_info.get('target_language')} {exercisetype}"
                         if curr_week_topics:
                             topic_prompt += f" related to topics: {', '.join(curr_week_topics)}"
                         
                         if mode == "Weekly Exam (Level Up)":
                             topic_prompt += ". Create challenging comprehensive test questions."
                         
+                        EXERCISE_TYPE_MAPPING = {
+                            "vocabulary": "multiple_choice",
+                            "grammar": "fill_in_the_blank",
+                            "dialogue": "open_question"
+                        }
                         
+                        exercise_schema_type = EXERCISE_TYPE_MAPPING.get(exercisetype, "multiple_choice")
+
                         result_data = asyncio.run(
                             st.session_state.tutor.tools.generate_exercise(
                                 topic=topic_prompt,
-                                exercise_type=exercise_type,
+                                exercisetype=exercise_schema_type,
                                 level=student_info.get('current_level', 3),
                                 count=10
                             )
                         )
                         
                         exercises_list = []
-                        if "exercises" in result_data and isinstance(result_data["exercises"], list):
-                            exercises_list = result_data["exercises"]
-                        elif isinstance(result_data, list):
-                            exercises_list = result_data
-                        elif isinstance(result_data, dict) and "error" not in result_data:
-                            
-                            exercises_list = [result_data]
+
+                        if isinstance(result_data, list):
+                            exercises_list = result_data 
+                        elif isinstance(result_data, dict):
+                            if "error" not in result_data:
+                                exercises_list = [result_data]
+                        else:
+                            st.error(f"Unexpected result type: {type(result_data)}")
+
                         
                         if not exercises_list:
                             st.error("Failed to generate exercises. Please try again.")
@@ -765,7 +780,7 @@ if st.session_state.current_student:
                                 "current_index": 0,
                                 "score": 0,
                                 "mode": mode,
-                                "exercise_type": exercise_type,
+                                "exercise_type": exercisetype,
                                 "results": [], 
                                 "completed": False
                             }
@@ -799,7 +814,11 @@ if st.session_state.current_student:
             
             task_label = current_q.get('task', 'N/A').replace("Multiple choice", "Choice").replace("multiple choice", "Choice").replace("Multiple Choice", "Choice")
             st.write(f"**Task:** {task_label}")
-            st.write(f"**Instructions:** {current_q.get('instructions', 'N/A')}")
+            st.write(f"**Question:** {current_q.get('question', 'No question provided')}")
+
+            instructions_text = current_q.get('instructions', '') or current_q.get('task', 'Complete the exercise')
+            if instructions_text:
+                st.write(f"**Instructions:** {instructions_text}")
             
             
             user_answer = None

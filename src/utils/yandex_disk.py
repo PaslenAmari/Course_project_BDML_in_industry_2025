@@ -1,11 +1,17 @@
 import logging
 import yadisk
-from config import YANDEX_DISK_TOKEN
+import os
+from pathlib import Path
+# from config import YANDEX_API_KEY
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
-
+PROJECT_ROOT = Path(__file__).parent.parent
+ENV_FILE = PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path=ENV_FILE, override=True)
+YANDEX_DISK_TOKEN = os.getenv("YANDEX_API_KEY")
 class YandexDiskClient:
-    def __init__(self, token: str = YANDEX_DISK_TOKEN):
+    def __init__(self, token: str = None):
         self.enabled = bool(token)
         if self.enabled:
             try:
@@ -29,20 +35,10 @@ class YandexDiskClient:
         if not self.enabled:
             return ""
 
-        try:
+        try:               
+                                                
             
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+                  
             
             logger.info(f"Searching Yandex Disk for topic: {topic}")
             results = self.client.search(topic, media_type="text")

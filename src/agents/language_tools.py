@@ -36,58 +36,57 @@ class LanguageTools:
         
         pass 
 
-    async def generate_exercise(
-        self,
-        topic: str,
-        exercise_type: str,
-        level: int,
-        count: int = 1,
-    ) -> Union[Dict, List[Dict]]:
-        """
-        Generate one or more exercises asynchronously.
-        """
-        try:
-            import uuid
-            
-            prompt = f"""
-Create practice exercise.
-Topic: {topic}, Type: {exercise_type}, Level: {level}
-
-Return JSON (ExerciseSchema):
-{{
-  "exercise_id": "string",
-  "type": "{exercise_type}",
-  "topic": "string",
-  "task": "string",
-  "question": "string",
-  "options": ["string"] (optional),
-  "correct_answer": "string",
-  "explanation": "string",
-  "difficulty": {level}
-}}
-"""
-            
-            
-            response = self.llm.invoke(prompt)
-            content = response.content
-            
-            
-            data = self._parse_json(content)
-            
-            if count > 1:
-                
-                
-                
-                
-                validated = ExerciseSchema(**data).model_dump()
-                return [validated] 
-            else:
-                validated = ExerciseSchema(**data).model_dump()
-                return validated
+    async def generate_exercise(self, topic: str, exercisetype: str, level: int, count: int = 1):
+        """Generate multiple exercises asynchronously."""
+        exercises = []
         
-        except Exception as exc:
-            logger.error(f"Error generating exercise: {exc}")
-            return {"error": str(exc)}
+        for i in range(count):
+            try:
+                import uuid
+                prompt = f"""Create ONE practice exercise #{i+1} out of {count}.
+
+    Topic: {topic}
+    Type: {exercisetype}
+    Level: {level}
+
+    CRITICAL REQUIREMENTS:
+    1. The "type" field MUST be EXACTLY: "{exercisetype}"
+    2. The "instructions" field MUST contain clear, specific instructions (NEVER empty or null)
+    3. Return ONLY valid JSON, no markdown, no extra text
+
+    Return VALID JSON:
+    {{
+    "exercise_id": "unique_id_str",
+    "type": "{exercisetype}",
+    "topic": "{topic}",
+    "task": "Clear task (e.g., 'Choose correct answer' or 'Fill in the blank')",
+    "instructions": "REQUIRED: Specific clear instructions for this exercise",
+    "question": "The question or prompt",
+    "options": ["opt1", "opt2", "opt3", "opt4"] or null,
+    "correct_answer": "Correct answer",
+    "explanation": "Why this is correct",
+    "difficulty": {level}
+    }}"""
+            
+                response = self.llm.invoke(prompt)
+                content = response.content
+                data = self.parse_json(content)
+                
+                validated = ExerciseSchema(**data).model_dump()
+                exercises.append(validated)
+                
+                logger.info(f"Generated exercise {i+1}/{count}")
+                
+            except Exception as exc:
+                logger.error(f"Error generating exercise {i+1}: {exc}")
+                continue
+        
+        if not exercises:
+            raise ValueError(f"Failed to generate any exercises out of {count}")
+        
+        return exercises
+
+
 
     def generate_dialogue(
         self,
@@ -115,7 +114,7 @@ Return JSON (DialogueSchema):
 }}
 """
             response = self.llm.invoke(prompt)
-            data = self._parse_json(response.content)
+            data = self.parse_json(response.content)
             
             validated = DialogueSchema(**data).model_dump()
             logger.info(f"Generated dialogue for topic '{topic}'")
@@ -125,18 +124,18 @@ Return JSON (DialogueSchema):
             logger.error(f"Error generating dialogue: {exc}")
             return {"error": str(exc)}
 
-    def _parse_json(self, text: str) -> Dict:
-        clean_res = text.strip()
-        if "```json" in clean_res:
-             clean_res = clean_res.split("```json")[1].split("```")[0].strip()
-        elif "```" in clean_res:
-             clean_res = clean_res.split("```json")[1].split("```")[0].strip()
-        
-        start = clean_res.find("{")
-        end = clean_res.rfind("}") + 1
-        if start != -1 and end != 0:
-             clean_res = clean_res[start:end]
-        return json.loads(clean_res)
+    
+    def parse_json(self, text: str) -> Dict:
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        return json.loads(text[start:end])
+
+
+
+
+
+
+
 
     def explain_grammar(
         self,
