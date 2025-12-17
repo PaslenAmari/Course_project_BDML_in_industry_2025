@@ -1,4 +1,4 @@
-# Personalized Educational Assistant (Language Profule MAS)
+# Personalized Educational Assistant (Language Profile MAS)
 
 **Course Project:** Machine Learning for Industrial Data (3rd Semester)
 
