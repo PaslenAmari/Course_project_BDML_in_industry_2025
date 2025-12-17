@@ -1,4 +1,4 @@
-# src/logging_config.py
+
 """
 Centralized logging configuration for Language Learning Platform
 """
@@ -8,7 +8,7 @@ import logging.handlers
 from pathlib import Path
 from datetime import datetime
 
-# Create logs directory
+
 LOGS_DIR = Path(__file__).parent.parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 
@@ -26,23 +26,23 @@ def setup_logger(name: str, log_file: str = None) -> logging.Logger:
     """
     logger = logging.getLogger(name)
     
-    # Avoid duplicate handlers
+    
     if logger.handlers:
         return logger
     
     logger.setLevel(logging.DEBUG)
     
-    # Default log file
+    
     if log_file is None:
         log_file = f"{name.replace('.', '_')}.log"
     
     log_path = LOGS_DIR / log_file
     
-    # File handler - ALL logs
+    
     file_handler = logging.handlers.RotatingFileHandler(
         filename=log_path,
-        maxBytes=10 * 1024 * 1024,  # 10 MB
-        backupCount=5,  # Keep 5 backups
+        maxBytes=10 * 1024 * 1024,  
+        backupCount=5,  
         encoding='utf-8'
     )
     file_handler.setLevel(logging.DEBUG)
@@ -52,7 +52,7 @@ def setup_logger(name: str, log_file: str = None) -> logging.Logger:
     )
     file_handler.setFormatter(file_formatter)
     
-    # Console handler - INFO and above only
+    
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_formatter = logging.Formatter(
@@ -60,7 +60,7 @@ def setup_logger(name: str, log_file: str = None) -> logging.Logger:
     )
     console_handler.setFormatter(console_formatter)
     
-    # Add handlers to logger
+    
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
     
@@ -94,7 +94,7 @@ def setup_error_logger() -> logging.Logger:
     return logger
 
 
-# Initialize main loggers
+
 app_logger = setup_logger("app", "app.log")
 tutor_logger = setup_logger("tutor_agent", "tutor_agent.log")
 planner_logger = setup_logger("curriculum_planner", "planner_agent.log")

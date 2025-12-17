@@ -1,4 +1,4 @@
-# llm.py
+
 import os
 from langchain_openai import ChatOpenAI
 import logging
@@ -7,7 +7,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# грузим .env не из текущей папки, а из src
+
 SRC_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 ENV_PATH = os.path.join(SRC_DIR, ".env")
 load_dotenv(ENV_PATH) 

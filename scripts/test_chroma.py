@@ -1,4 +1,4 @@
-# test_chroma.py
+
 """Test Chroma vector database"""
 import sys
 from pathlib import Path
@@ -12,7 +12,7 @@ def test_chroma():
     
     chroma = ChromaVectorDB("./chroma_data")
     
-    # Add some test materials
+    
     print("\nAdding test materials...")
     chroma.add_material(
         "greeting_01",
@@ -28,13 +28,13 @@ def test_chroma():
         {"level": 3}
     )
     
-    # Search
+    
     print("\nSearching materials...")
     results = chroma.search_materials("greeting", limit=5)
     for r in results:
         print(f"- {r['id']}: relevance={r['relevance']:.2f}")
     
-    # Check size
+    
     print(f"\nTotal materials: {chroma.get_collection_size('lesson_materials')}")
     
     print("\nChroma test passed!")

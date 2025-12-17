@@ -1,4 +1,4 @@
-# src/agents/curriculum_planner_agent.py
+
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -8,7 +8,7 @@ import sys
 import json
 from pathlib import Path
 
-# Add project root to path
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -101,7 +101,7 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             response = self.llm.invoke(prompt)
             text = response.content.strip()
 
-            # Very rigorous parsing – works even if the model is "chattering"
+            
             start = text.find("{")
             end = text.rfind("}") + 1
             if start == -1 or end == 0:
@@ -128,16 +128,16 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
                     "is_last": next_week_num >= curriculum.get("total_weeks", 24)
                 }
 
-        # If the plan is over
+        
         return {
             "week": next_week_num,
             "topics": ["Final Project", "Free Communication"],
             "is_last": True
         }
 
-    # =================================================================
-    # Main public method
-    # =================================================================
+    
+    
+    
     def plan_curriculum(
         self,
         student_id: str,
@@ -147,12 +147,12 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
         """
         Creates or updates a syllabus and returns the next topic.
         """
-        # 1. Uploading a profile
+        
         profile = self.db.get_student(student_id)
         if not profile:
             return {"error": "Student not found", "student_id": student_id}
 
-        # 2. Checking if there is already a plan
+        
         target_lang = profile.get("target_language", "English")
         existing = self.db.get_curriculum(student_id, language=target_lang)
 
@@ -163,18 +163,18 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             logger.info(f"A new curriculum is being generated for {student_id} ({target_lang})")
             curriculum = self._generate_curriculum_with_llm(profile, total_weeks=total_weeks)
             curriculum["student_id"] = student_id
-            curriculum["language"] = target_lang # Ensure strict consistency
+            curriculum["language"] = target_lang 
             curriculum["completed_weeks"] = 0
             curriculum["created_at"] = datetime.utcnow().isoformat()
 
-        # 3. Determine the next week
+        
         next_lesson = self._find_next_week(curriculum)
 
-        # 4. Save (if updated)
+        
         if not existing or force_regenerate:
             self.db.save_curriculum(student_id, curriculum)
 
-        # 5. Return the result
+        
         return {
             "student_id": student_id,
             "next_week": next_lesson["week"],
@@ -183,12 +183,12 @@ ANSWER WITH NOTHING BUT THIS EXACT JSON — NO extra text, NO markdown, NO expla
             "completed_weeks": curriculum.get("completed_weeks", 0),
             "level_from": curriculum.get("level_from", "A1"),
             "level_to": curriculum.get("level_to", "C1"),
-            "message": f"Неделя {next_lesson['week']}: {', '.join(next_lesson['topics'])}",
+            "message": f"Week {next_lesson['week']}: {', '.join(next_lesson['topics'])}",
             "plan_is_new": not bool(existing) or force_regenerate,
             "topics_by_week": curriculum.get("topics_by_week", [])
         }
 
-    # Alias
+    
     def get_next_topics(self, student_id: str) -> Dict:
         """Quickly get only the next topic (without re-creating the plan)"""
         return self.plan_curriculum(student_id, force_regenerate=False)

@@ -1,4 +1,4 @@
-# test_tutor.py
+
 import sys
 from pathlib import Path
 
@@ -16,7 +16,7 @@ def run_test():
     result = agent.teach(
         student_id="emil_english",
         topic="Present Simple Tense",
-        outline=None,  # можно передать свой список шагов, если нужно
+        outline=None,  
     )
 
     print("\nLesson result:")

@@ -1,4 +1,4 @@
-# language_tutor_agent.py
+
 """
 Language Tutor Agent.
 
@@ -22,7 +22,7 @@ from src.database.mongodb_adapter import LanguageLearningDB
 from src.database.chroma_db import ChromaVectorDB
 
 logger = logging.getLogger(__name__)
-# logger = tutor_logger 
+
 
 
 class LanguageTutorAgent(BaseAgent):
@@ -41,8 +41,8 @@ class LanguageTutorAgent(BaseAgent):
 
     def __init__(
         self,
-        # database_url: str,
-        # vector_path: str,
+        
+        
         database_url: str = "mongodb://localhost:27017",
         vector_path: str = "./chroma_data"
     ):
@@ -377,7 +377,7 @@ class LanguageTutorAgent(BaseAgent):
                 topic=message
             )
             
-            # Format response as readable text
+            
             output = f"""
     **Lesson: {result.get('topic', 'N/A')}**
 
