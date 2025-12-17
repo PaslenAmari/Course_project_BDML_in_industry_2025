@@ -21,10 +21,8 @@ class AssessorAgent(BaseAgent):
         """
         Generates a quiz for the given topic.
         """
-        logger.info(f"Generating quiz for {student_id} on topic: {topic}")
+        logger.info(f"Generating quiz for {student_id} on topic: {topic}")        
         
-        # Mock logic for now (restoring lost functionality)
-        # ideally this would use LLM to generate questions
         quiz = {
             "topic": topic,
             "questions": []
