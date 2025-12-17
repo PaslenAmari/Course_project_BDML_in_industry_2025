@@ -1,4 +1,4 @@
-# Personalized Educational Assistant
+# Personalized Educational Assistant (Language Profule MAS)
 
 **Course Project:** Machine Learning for Industrial Data (3rd Semester)
 
@@ -8,23 +8,9 @@
 * Gaibaliev Emil
 * [Gleb Mikloshevich](https://github.com/GlebMikloshevich)
 
-**Instructions:**
-
-To create docker use the following command:
+The system aims to transform traditional language learning into an interactive, data-driven process where multiple coordinated agents continuously analyze student performance and preferences to generate tailored learning plans, exercises, and explanations. By distributing responsibilities across agents, the platform supports scalable, efficient, and engaging language instruction for diverse learners.
 
 
-**docker run -d --name kursach -p 27017:27017 mongo:6**
-
-
-To launch docker use the following command:
-
-
-**docker start kursach**
-
-From the python terminal launch the ui:
-
-
-**streamlit run src/ui/app.py**
 
 The landing page:
 
